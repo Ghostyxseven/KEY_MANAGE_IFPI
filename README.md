@@ -1,30 +1,33 @@
-# CoreTech — KEY_MANAGE_IFPI
+# CoreTech — Sistema de Gerenciamento de Acesso a Chaves
 
 Sistema mobile offline-first desenvolvido para digitalizar o controle de retirada e devolução de chaves de salas e laboratórios do IFPI – Campus Piripiri.
 
 O projeto surgiu a partir da identificação de problemas no processo manual atualmente utilizado na guarita do campus, como:
-- transcrição manual entre turnos;
-- inconsistência nos registros;
-- dificuldade de rastreabilidade;
-- dependência de caderno físico;
-- falhas operacionais durante quedas de internet.
+
+- Transcrição manual entre turnos
+- Inconsistência nos registros
+- Dificuldade de rastreabilidade
+- Dependência de caderno físico
+- Falhas operacionais durante quedas de internet
 
 ---
 
 # Objetivo do Projeto
 
 Desenvolver um MVP funcional capaz de:
-- registrar retirada de chaves;
-- registrar devolução;
-- exibir status das chaves em tempo real;
-- funcionar mesmo sem internet;
-- sincronizar os registros posteriormente com o servidor central.
+
+- Registrar retirada de chaves
+- Registrar devolução
+- Exibir status das chaves em tempo real
+- Funcionar mesmo sem internet
+- Sincronizar os registros posteriormente com o servidor central
 
 ---
 
 # Escopo do MVP
 
 ## Funcionalidades incluídas
+
 - Autenticação por nome e matrícula
 - Quadro virtual de chaves
 - Indicadores visuais de status
@@ -34,6 +37,7 @@ Desenvolver um MVP funcional capaz de:
 - Sincronização básica de dados
 
 ## Funcionalidades pós-MVP
+
 - Dashboard gerencial
 - Relatórios históricos
 - Notificações
@@ -46,15 +50,18 @@ Desenvolver um MVP funcional capaz de:
 # Stack Tecnológica
 
 ## Frontend
+
 - React Native
 - Expo
 - TypeScript
 
 ## Backend
+
 - Node.js
 - Express
 
 ## Banco de Dados
+
 - SQLite (offline/local)
 - PostgreSQL (servidor)
 
@@ -65,101 +72,156 @@ Desenvolver um MVP funcional capaz de:
 ```txt
 coretech-chave-access/
 │
-├── docs/              # Documentação do projeto
-├── frontend/          # Aplicação mobile
-├── backend/           # API e regras de negócio
-├── wireframes/        # Fluxos e telas
-├── meetings/          # Atas e registros de reunião
+├── docs/              
+├── frontend/          
+├── backend/           
+├── wireframes/        
+├── meetings/          
 ├── README.md
 └── .gitignore
+```
 
-Organização da Equipe
-Membro	Função
-Wesley Tiago	Scrum Master
-Antônio Carlos	Product Owner
-Ana Rosa	    Documentação e requisitos
-Eric Vinicius	UX/UI
-Roger Pierre	Backend
-Nilson Rodrigo	Frontend
+### Descrição das pastas
 
-Metodologia
+| Pasta | Descrição |
+|---|---|
+| `/docs` | Documentação do projeto |
+| `/frontend` | Aplicação mobile |
+| `/backend` | API e regras de negócio |
+| `/wireframes` | Fluxos, desenhos e protótipos |
+| `/meetings` | Atas e registros de reunião |
+
+---
+
+# Integrantes da Equipe
+
+| Integrante | Função |
+|---|---|
+| Wesley Tiago | Scrum Master |
+| Antônio Carlos | Product Owner |
+| Ana Rosa | Documentação e requisitos |
+| Eric Vinicius | UX/UI |
+| Roger Pierre | Backend |
+| Nilson Rodrigo | Frontend |
+
+---
+
+# Metodologia
 
 O projeto utiliza:
 
-Scrum
-Kanban
-GitHub Projects
-Versionamento com Git
-Organização das Branches
+- Scrum
+- Kanban
+- GitHub Projects
+- Versionamento com Git
+
+---
+
+# Organização das Branches
 
 Cada integrante trabalha em sua própria branch.
 
-Exemplo
+## Exemplo
+
+```txt
 main
 develop
 feature_WesleySM
 feature_EricUI
 feature_RogerBackend
-Fluxo de Trabalho
-Atualizar repositório
+```
+
+---
+
+# Fluxo de Trabalho
+
+## 1. Atualizar repositório
+
+```bash
 git pull origin main
-Criar ou acessar branch
+```
+
+## 2. Criar ou acessar branch
+
+```bash
 git checkout feature_nome
-Adicionar alterações
+```
+
+## 3. Adicionar alterações
+
+```bash
 git add .
-Criar commit
+```
+
+## 4. Criar commit
+
+```bash
 git commit -m "feat: descrição da alteração"
-Enviar para GitHub
+```
+
+## 5. Enviar para GitHub
+
+```bash
 git push origin feature_nome
-Abrir Pull Request
-Organização do Kanban
-Backlog
+```
 
-Ideias futuras e funcionalidades pós-MVP.
+## 6. Abrir Pull Request
 
-A Fazer
+Após finalizar uma funcionalidade, abrir um Pull Request para revisão da equipe.
 
-Tarefas da sprint atual.
+---
 
-Fazendo
+# Organização do Kanban
 
-Tarefas em desenvolvimento.
+| Coluna | Objetivo |
+|---|---|
+| Backlog | Ideias futuras e funcionalidades pós-MVP |
+| A Fazer | Tarefas da sprint atual |
+| Fazendo | Tarefas em desenvolvimento |
+| Em Revisão | Aguardando validação da equipe |
+| Feito | Tarefas concluídas |
 
-Em Revisão
+---
 
-Aguardando validação da equipe.
-
-Feito
-
-Tarefas concluídas.
-
-Documentação
+# Documentação
 
 Os documentos do projeto estão disponíveis em:
 
+```txt
 /docs
+```
 
-Incluindo:
+## Documentos atuais
 
-Relatório de Viabilidade de Software (RVS)
-Documento de Requisitos
-Matriz de riscos
-Fluxos principais
-Wireframes
-Planejamento do MVP
-Estado Atual do Projeto
-Concluído
-RVS
-Documento preliminar de requisitos
-Fluxos principais
-Wireframes iniciais
-Levantamento de stakeholders
-Matriz de riscos
-Em andamento
-Organização do backlog
-Estrutura inicial do repositório
-Planejamento técnico do MVP
-Observações
+- Relatório de Viabilidade de Software (RVS)
+- Documento preliminar de requisitos
+- Matriz de riscos
+- Fluxos principais
+- Wireframes
+- Planejamento do MVP
+
+---
+
+# Estado Atual do Projeto
+
+## Concluído
+
+- RVS
+- Documento preliminar de requisitos
+- Fluxos principais
+- Wireframes iniciais
+- Levantamento de stakeholders
+- Matriz de riscos
+
+## Em andamento
+
+- Organização do backlog
+- Estrutura inicial do repositório
+- Planejamento técnico do MVP
+
+---
+
+# Observações
 
 Este projeto possui caráter acadêmico e está sendo desenvolvido na disciplina de Engenharia de Software II do curso de Análise e Desenvolvimento de Sistemas do IFPI – Campus Piripiri.
 
