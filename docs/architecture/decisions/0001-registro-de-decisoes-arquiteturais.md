@@ -17,16 +17,16 @@ O time CoreTech é composto por 7 membros com diferentes papéis (Scrum Master, 
 
 Adotamos o padrão de **ADRs (Architecture Decision Records)** como ferramenta oficial de governança técnica e registro histórico do repositório.
 
-Cada decisão arquitetural relevante será documentada em um arquivo Markdown numerado sequencialmente, armazenado na pasta `docs/ADRs/` na raiz do repositório, seguindo o template de Michael Nygard com as seções: **Status**, **Contexto**, **Decisão** e **Consequências**.
+Cada decisão arquitetural relevante será documentada em um arquivo Markdown numerado sequencialmente, armazenado na pasta `docs/architecture/decisions/` na raiz do repositório, seguindo o template de Michael Nygard com as seções: **Status**, **Contexto**, **Decisão** e **Consequências**.
 
 A inicialização da estrutura de pastas pode ser feita manualmente ou via ferramentas de CLI como `adr-tools` ou o equivalente em Node.js (`adr-cli` / `adr-log`):
 
 ```bash
 # Opção manual
-mkdir -p docs/ADRs
+mkdir -p docs/architecture/decisions
 
 # Opção via adr-tools (requer instalação)
-adr init docs/ADRs
+adr init docs/architecture/decisions
 ```
 
 ## Consequências
