@@ -8,7 +8,7 @@ Este diretório reúne as entregas e artefatos solicitados pelo professor e pela
 - `PROTOTYPE.md` — Prototipação e links para wireframes/protótipos.
 - `STATUS_REPORT_1.md` — Relatório de status da primeira entrega/sprint.
 - `RESEARCH_PAPER.md` — Trabalho de Pesquisa: Anatomia e Padrões da Arquitetura.
-- `ADRs/` — Registro de Decisões Arquiteturais (ADRs já existentes).
+- `architecture/decisions/` — Registro de Decisões Arquiteturais (ADRs já existentes).
 - `CONTRIBUTORS.md` — Lista de integrantes.
 - `PROCUREMENT.md` — Licitações / aquisições.
 - `BRANCHING_POLICY.md` — Regras simples para organizar as branches.
