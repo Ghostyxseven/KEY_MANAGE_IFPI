@@ -1,26 +1,25 @@
-
 # Integrantes e Responsabilidades — CoreTech
 
-Lista oficial dos membros do time e suas responsabilidades. Preencher com e‑mail institucional quando possível.
+## Projeto
 
-Equipe
+**Sistema de Gerenciamento de Acesso a Chaves de Salas e Laboratórios**
+**Instituição:** Instituto Federal do Piauí — Campus Piripiri
+**Componente Curricular:** Engenharia de Software II
+**Equipe:** CoreTech
 
-- Wesley Tiago — Scrum Master — wesley@example.com
-- Antônio Carlos — Product Owner — antonio@example.com
-- Ana Rosa — Documentação e Requisitos — ana@example.com
-- Eric Vinicius — UX / UI — eric@example.com
-- Roger Pierre — Backend — roger@example.com
-- Nilson Rodrigo — Frontend — nilson@example.com
+## Integrantes
 
-Template para registro individual (copiar e preencher):
+| Integrante      | Função no projeto                     |
+| --------------- | ------------------------------------- |
+| Wesley Tiago    | Scrum Master                          |
+| Antonio Carlos  | Product Owner                         |
+| Ana Rosa        | Analista de Requisitos / Documentação |
+| Eric Vinicius   | UX/UI                                 |
+| Roger Pierre    | Desenvolvimento Full Stack            |
+| Nilson Rodrigo  | Desenvolvimento Full Stack            |
 
-- Nome:
-- Função no projeto:
-- Responsabilidades principais:
-- E‑mail / contato:
-- Branch principal:
+## Responsabilidades gerais
 
-Observações
+A equipe CoreTech é responsável pela análise, documentação, definição arquitetural e desenvolvimento do MVP do Sistema de Gerenciamento de Acesso a Chaves de Salas e Laboratórios do IFPI Campus Piripiri.
 
-- Este arquivo deve listar todos os membros para que o envio ao professor contenha os nomes completos do grupo.
-
+O trabalho contempla análise de viabilidade, elicitação e organização de requisitos, rastreabilidade do backlog, decisões arquiteturais e desenvolvimento da solução mobile offline-first.
