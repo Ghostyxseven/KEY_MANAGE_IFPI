@@ -198,12 +198,6 @@ Os documentos do projeto estão disponíveis em:
 - Matriz de riscos
 - Fluxos principais
 - Wireframes
-
-## Documentos adicionais
-
-- Arquitetura e aderência: [docs/ARCHITECTURE_ADHERENCE.md](docs/ARCHITECTURE_ADHERENCE.md)
-- Integrantes e responsabilidades: [docs/CONTRIBUTORS.md](docs/CONTRIBUTORS.md)
-- Licitações / aquisições: [docs/PROCUREMENT.md](docs/PROCUREMENT.md)
 - Planejamento do MVP
 
 ---
