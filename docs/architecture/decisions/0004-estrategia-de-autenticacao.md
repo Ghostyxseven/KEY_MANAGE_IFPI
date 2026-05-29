@@ -18,33 +18,30 @@ Alternativas consideradas:
 
 Decisão
 --------
-Adotamos **Identity-as-a-Service (IdaaS)** como estratégia de autenticação para o MVP, integrando via tokens JWT/Session emitidos pelo provedor e validando-os no backend.
+Para o escopo do MVP adotamos uma estratégia simplificada: **autenticação por `nome` e `matrícula`** local no dispositivo (sem senha, sem fluxo de recuperação) para acomodar o perfil do guarda e a operação offline-first. Este fluxo atende os critérios de usabilidade detectados no RVS e no DR.
 
-Justificativa resumida: reduz trabalho operacional e risco de implementar mecanismos inseguros; permite focar nas regras de negócio do MVP durante o semestre.
+Nota: a adoção de um provedor IdAaS (ex.: Auth0, Firebase Auth) é considerada uma opção pós‑MVP para ambientes de produção que exigirem gerenciamento centralizado de contas, reset de credenciais e políticas de segurança mais avançadas. Se necessário futuramente, a integração com um provedor deverá ser encapsulada em `adapters/auth/` para facilitar troca sem impactar o core.
 
 Consequências
 ------------
 
-- Positivas:
-	- Integração rápida com SDKs e fluxos prontos (login, reset de senha, verificação de e-mail).
-	- Menor surface de segurança para o time (hashing, MFA, verificação de tokens são gerenciados).
+### Positivas
+- Fluxo de autenticação simples e alinhado ao perfil do usuário principal (guarda), reduzindo barreira de uso e treinamento.
+- Funciona totalmente em modo offline, atendendo restrição RNF03.
 
-- Negativas / Trade-offs:
-	- Dependência e possível vendor lock-in; migração futura exigirá planejamento.
-	- Custos operacionais no ambiente de produção dependendo do provedor.
+### Negativas / Trade-offs
+- Menor robustez para cenários que exigam controle de acesso refinado, recuperação de credenciais ou auditoria centralizada (funcionalidades de pós‑MVP).
 
-Mitigações
----------
-
-- Encapsular integrações com o provedor em `adapters/auth/` para facilitar troca futura.
-- Manter tabela `profiles` em Postgres para atributos de domínio ligados ao `user_id` do provedor.
-- Documentar processo de exportação/importação de usuários e requisitos para migração.
+### Mitigações
+- Encapsular a lógica de autenticação em `adapters/auth/` desde o início para facilitar migração futura para IdAaS se necessário.
+- Documentar claramente no README e nas ADRs a limitação do MVP e o plano de evolução para produção.
 
 Critérios de aceitação
 ----------------------
 
-- Autenticação funcional no ambiente de desenvolvimento com um provedor gerenciado (ex.: Railway, Neon) e exemplos documentados em `docs/`.
-- Endpoints críticos protegidos e validados por middleware de verificação de token.
+- Identificação por `nome` e `matrícula` funcional no app em modo offline e online.
+- Fluxo de identificação de sessão preserva `nome` e `matrícula` durante a sessão sem exigir conexão.
+- Módulo de autenticação encapsulado em `adapters/auth/` com documentação de como migrar para IdAaS pós‑MVP.
 
 Notas de implementação
 --------------------

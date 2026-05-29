@@ -1,24 +1,22 @@
-
-# ADR 0005 — Hospedagem e Infraestrutura
-
-- **Status:** Aceito
-- **Data:** 2026-05-28
-- **Autor:** CoreTech
-- **ID:** ADR 0005
-
-Contexto
--------
-Escolher hospedagem e infraestrutura influencia diretamente custo, tempo de entrega e complexidade operacional. Para o MVP, priorizamos velocidade e previsibilidade operacional, considerando opções como BaaS/Serverless e containers em provedores cloud.
-
 Decisão
 --------
-Adotamos **BaaS / serviços gerenciados** para a fase inicial do MVP, utilizando provedor que ofereça Postgres gerenciado, autenticação e storage (ex.: Railway, Neon). Funções serverless/Edge podem ser usadas para rotinas específicas.
+Prioritizamos o uso do **servidor do campus (Node.js + PostgreSQL)** como primeira opção operacional, por compatibilidade com o ambiente existente e por custo zero estimado no RVS. **BaaS / serviços gerenciados (ex.: Railway, Neon)** são mantidos como **plano de contingência** caso o servidor do campus não esteja disponível ou sua utilização seja inviável.
 
 Consequências
 ------------
 
-- Positivas:
-	- Deploys rápidos com menor overhead operacional.
+### Positivas
+- Uso do servidor do campus reduz custos e evita dependência externa; favorece conformidade institucional.
+- Compatibilidade técnica com o ambiente de TI local facilita deploy e suporte por parte do técnico do campus.
+
+### Negativas / Trade-offs
+- Dependência da disponibilidade e prioridade do TI do campus; pode haver limitação de SLA e disponibilidade.
+- Possível necessidade de adaptar processos de deploy e backups à política interna do campus.
+
+### Mitigações
+- Manter scripts de deploy e `docker-compose`/CI para migração rápida para BaaS caso necessário.
+- Definir política de fallback: se o servidor do campus não estiver confirmado até a Semana 2, ativar provisionamento em Railway/Neon.
+- Encapsular integrações específicas do provedor em `adapters/` para reduzir acoplamento.
 	- Menos trabalho inicial com infraestrutura e monitoramento.
 
 - Negativas / Trade-offs:

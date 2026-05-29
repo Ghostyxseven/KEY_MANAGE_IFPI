@@ -56,10 +56,12 @@ Criterios de aceitação
 - POC de sincronização aprovado: envio de registros do SQLite para o servidor e aplicação da regra `último timestamp vence` demonstrada em ambiente de teste.
 - Documentação curta no `docs/architecture/decisions/0003-*` descrevendo fluxo de sincronização, limitações e plano de contingência.
 
+
 Notas operacionais
 -----------------
 
-- Pacotes/choices iniciais recomendados: `expo` (cliente), `react-native-sqlite-storage` ou `expo-sqlite` (local), `express`, `pg`/`node-postgres` (server). O uso de `Prisma` é opcional — pode agilizar desenvolvimento TypeScript, mas `node-postgres` puro mantém menor camada de abstração se preferido.
+- Pacotes/choices iniciais recomendados: `expo` (cliente), `react-native-sqlite-storage` ou `expo-sqlite` (local), `express`, `pg`/`node-postgres` (server).
+- O uso de `Prisma` é **opcional** e não foi imposto pelo RVS; se a equipe optar por `Prisma` por ergonomia TypeScript, documentar essa escolha em uma ADR adicional para rastreabilidade. Caso contrário, `node-postgres` (`pg`) é plenamente aceitável e consistente com o RVS.
 - Evitar soluções BaaS obrigatórias; Railway/Neon podem ser opções de contingência caso o servidor do campus não esteja disponível.
 
 Justificativa vinculada ao semestre
