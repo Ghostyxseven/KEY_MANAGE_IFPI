@@ -1,11 +1,11 @@
 # ADR 0005 — Estratégia de Hospedagem e Infraestrutura
 
-**Status:** Aceito
-**Data:** 2026-05-28
-**Autor:** CoreTech
-**ID:** ADR 0005
-**Time:** CoreTech
-**Projeto:** Sistema de Gerenciamento de Acesso a Chaves — IFPI Campus Piripiri
+* **Status:** Aceito
+* **Data:** 2026-05-28
+* **Autor:** CoreTech
+* **ID:** ADR 0005
+* **Time:** CoreTech
+* **Projeto:** Sistema de Gerenciamento de Acesso a Chaves — IFPI Campus Piripiri
 
 ---
 
