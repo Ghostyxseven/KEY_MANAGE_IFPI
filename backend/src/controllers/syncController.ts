@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import pool from '../database/connection';
+import adapter from '../adapters/db/postgresAdapter';
 
 interface SyncEvent {
   id: string;
@@ -100,18 +101,13 @@ export async function syncEvents(req: Request, res: Response) {
 // GET /api/sync/status/:deviceId
 export async function getSyncStatus(req: Request, res: Response) {
   const { deviceId } = req.params;
-
-  const result = await pool.query(
-    `SELECT id, type, key_id, device_timestamp, status
-     FROM events
-     WHERE device_id = $1
-     ORDER BY device_timestamp DESC`,
-    [deviceId]
-  );
+  const normalizedDeviceId = Array.isArray(deviceId) ? deviceId[0] : deviceId;
+  // Prefer using the DB adapter when available to centralize SQL logic.
+  const rows = await adapter.getEventsByDevice(normalizedDeviceId);
 
   res.json({
-    device_id: deviceId,
-    total: result.rows.length,
-    events: result.rows,
+    device_id: normalizedDeviceId,
+    total: rows.length,
+    events: rows,
   });
 }
