@@ -1,0 +1,424 @@
+openapi: 3.0.3
+info:
+  title: Sistema de Gerenciamento de Acesso a Chaves — API
+  description: >
+    Contrato de API do MVP do sistema CoreTech (IFPI Campus Piripiri).
+    Toda rota abaixo é rastreável a um Requisito Funcional (RF), Regra de
+    Negócio (RN) e Caso de Uso (UC) do ERS/Backlog do projeto. Nenhuma
+    implementação (manual ou gerada por IA) deve divergir deste contrato —
+    ele é a fonte da verdade consumida pelo Harness (Feedforward).
+  version: "1.0.0"
+  contact:
+    name: CoreTech — Engenharia de Software II — IFPI Campus Piripiri
+
+servers:
+  - url: https://api.coretech-chaves.example.com/v1
+    description: Servidor central (produção — Railway, ver ADR-0005)
+  - url: http://localhost:3000/v1
+    description: Ambiente local de desenvolvimento
+
+tags:
+  - name: Identificação
+    description: RF01, RN02, UC01
+  - name: Chaves
+    description: RF02, RF03, RF04, RF05, RF06, RF09, RN01, RN03, RN04, RN05, RN06
+  - name: Sincronização
+    description: RF07, RF08, RF10, RN07, UC04
+
+paths:
+  /identificacao:
+    post:
+      tags: [Identificação]
+      summary: Registrar identificação do guarda por nome e matrícula (RF01, UC01)
+      description: >
+        Não representa um login tradicional (sem senha complexa, sem
+        perfis diferenciados no MVP — ver RVS §2 e ERS §4.1). Esta rota
+        é usada apenas quando o dispositivo está online; a identificação
+        também deve funcionar 100% offline no cliente (ver RNF03), sendo
+        este endpoint opcional/best-effort para fins de auditoria central.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentificacaoRequest'
+      responses:
+        '200':
+          description: Identificação aceita.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentificacaoResponse'
+        '400':
+          description: Nome ou matrícula ausentes/inválidos (RN02).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+  /chaves:
+    get:
+      tags: [Chaves]
+      summary: Obter o quadro virtual de chaves com status (RF02, RF03)
+      responses:
+        '200':
+          description: Lista de todas as chaves cadastradas com status atual.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Chave'
+
+  /chaves/{codigo}:
+    get:
+      tags: [Chaves]
+      summary: Consultar detalhes e status atual de uma chave (RF02, RF03)
+      parameters:
+        - $ref: '#/components/parameters/CodigoChave'
+      responses:
+        '200':
+          description: Detalhe da chave.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chave'
+        '404':
+          description: Código de chave não cadastrado no padrão do campus (RN04).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+  /chaves/{codigo}/historico:
+    get:
+      tags: [Chaves]
+      summary: Consultar histórico de retiradas e devoluções de uma chave (RF09)
+      description: >
+        Espelha, no servidor, o histórico que o dispositivo mantém localmente
+        no SQLite (RF09/US-03). Usado por gestão/direção do campus para
+        auditoria — não é uma tela do MVP para o guarda, que consulta o
+        histórico localmente e offline.
+      parameters:
+        - $ref: '#/components/parameters/CodigoChave'
+      responses:
+        '200':
+          description: Lista de movimentações da chave, mais recente primeiro.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movimentacao'
+        '404':
+          description: Código de chave não cadastrado no padrão do campus (RN04).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+  /chaves/{codigo}/retirada:
+    post:
+      tags: [Chaves]
+      summary: Registrar retirada de uma chave (RF04, RF05, RN01, RN02, RN04, RN06, UC02)
+      description: >
+        Regra crítica: o servidor DEVE recusar a retirada se o status atual
+        da chave já for "em_uso" (RN01/RN05 — bloqueio simétrico). O cliente
+        também aplica essa checagem localmente em modo offline (Strategy
+        Pattern — CheckoutStrategy, ver ADR-0009); o servidor é a segunda
+        linha de defesa na sincronização.
+      parameters:
+        - $ref: '#/components/parameters/CodigoChave'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroMovimentacaoRequest'
+      responses:
+        '201':
+          description: Retirada registrada; status da chave atualizado para em_uso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimentacao'
+        '409':
+          description: Chave já está com status "em_uso" (RN01). Retirada bloqueada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroConflito'
+              example:
+                codigo: "CHAVE_JA_EM_USO"
+                mensagem: "A chave A/S9 ja esta em uso e nao pode ser retirada novamente."
+                responsavelAtual:
+                  nome: "Ana Rosa Pereira Chaves"
+                  matricula: "2024010456"
+        '400':
+          description: Responsável (nome/matrícula) ausente (RN02).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+  /chaves/{codigo}/devolucao:
+    post:
+      tags: [Chaves]
+      summary: Registrar devolução de uma chave (RF06, RN03, RN05, RN06, UC03)
+      description: >
+        Regra crítica: o servidor DEVE recusar a devolução se o status atual
+        da chave já for "disponivel" (RN05). Ver ReturnStrategy (ADR-0009).
+      parameters:
+        - $ref: '#/components/parameters/CodigoChave'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroMovimentacaoRequest'
+      responses:
+        '201':
+          description: Devolução registrada; status da chave atualizado para disponivel.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimentacao'
+        '409':
+          description: Chave já está com status "disponivel" (RN05). Devolução bloqueada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroConflito'
+              example:
+                codigo: "CHAVE_JA_DISPONIVEL"
+                mensagem: "A chave A/S9 ja esta disponivel; nao ha devolucao pendente para registrar."
+        '400':
+          description: Responsável (nome/matrícula) ausente (RN02).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+  /sync:
+    post:
+      tags: [Sincronização]
+      summary: Sincronizar lote de registros pendentes gerados offline (RF07, RF08, RN07, UC04)
+      description: >
+        Endpoint chamado automaticamente pelo cliente ao detectar
+        restauração de conectividade (NetInfo — ver RVS §3.1 e US-09).
+        Nenhuma ação manual do guarda é necessária (RNF05). Em caso de
+        conflito de timestamp para a mesma chave, o servidor aplica a
+        estratégia "último timestamp vence" (RN07/ADR-0006) e retorna o
+        resultado individual de cada registro enviado, nunca um sucesso
+        genérico de lote — o cliente precisa saber, item a item, o que foi
+        confirmado, o que sofreu conflito e o que falhou (FA-02, FE-01..FE-04).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncRequest'
+      responses:
+        '200':
+          description: Lote processado (mesmo que parcialmente — ver FA-03).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResponse'
+        '400':
+          description: Lote malformado ou vazio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+
+components:
+  parameters:
+    CodigoChave:
+      name: codigo
+      in: path
+      required: true
+      description: Código no padrão já utilizado pelo campus (RN04), ex. "A/S9".
+      schema:
+        type: string
+        pattern: '^[A-Za-z]+/[A-Za-z0-9]+$'
+        example: "A/S9"
+
+  schemas:
+    Guarda:
+      type: object
+      description: Responsável identificado pela operação (RF01, RN02).
+      required: [nome, matricula]
+      properties:
+        nome:
+          type: string
+          minLength: 3
+          example: "Nilson Rodrigo"
+        matricula:
+          type: string
+          pattern: '^[A-Za-z0-9]+$'
+          example: "2024010123"
+
+    IdentificacaoRequest:
+      allOf:
+        - $ref: '#/components/schemas/Guarda'
+
+    IdentificacaoResponse:
+      type: object
+      properties:
+        identificado:
+          type: boolean
+          example: true
+        sessao:
+          type: object
+          description: Referência de sessão local (mantida no dispositivo, RF01/US-02).
+          properties:
+            nome:
+              type: string
+            matricula:
+              type: string
+            iniciadaEm:
+              type: string
+              format: date-time
+
+    StatusChave:
+      type: string
+      enum: [disponivel, em_uso]
+      description: "verde = disponivel · vermelho = em_uso (RF03)"
+
+    Chave:
+      type: object
+      required: [codigo, status]
+      properties:
+        codigo:
+          type: string
+          pattern: '^[A-Za-z]+/[A-Za-z0-9]+$'
+          example: "A/S9"
+        status:
+          $ref: '#/components/schemas/StatusChave'
+        responsavelAtual:
+          $ref: '#/components/schemas/Guarda'
+          nullable: true
+        ultimaMovimentacaoEm:
+          type: string
+          format: date-time
+          nullable: true
+
+    TipoMovimentacao:
+      type: string
+      enum: [retirada, devolucao]
+
+    RegistroMovimentacaoRequest:
+      type: object
+      required: [responsavel, timestampLocal, deviceId]
+      properties:
+        responsavel:
+          $ref: '#/components/schemas/Guarda'
+        timestampLocal:
+          type: string
+          format: date-time
+          description: Horário do dispositivo no momento da operação (RN06).
+        deviceId:
+          type: string
+          description: Identificador estável do dispositivo/guarda (para idempotência, FE-04).
+
+    Movimentacao:
+      type: object
+      required: [id, chaveCodigo, tipo, responsavel, timestampLocal, syncStatus]
+      properties:
+        id:
+          type: string
+          format: uuid
+        chaveCodigo:
+          type: string
+          example: "A/S9"
+        tipo:
+          $ref: '#/components/schemas/TipoMovimentacao'
+        responsavel:
+          $ref: '#/components/schemas/Guarda'
+        timestampLocal:
+          type: string
+          format: date-time
+        deviceId:
+          type: string
+        syncStatus:
+          type: string
+          enum: [pendente, sincronizado, erro]
+          description: Estado local no SQLite do dispositivo (US-09).
+
+    SyncRequest:
+      type: object
+      required: [deviceId, registros]
+      properties:
+        deviceId:
+          type: string
+        registros:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movimentacao'
+
+    SyncItemResult:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [sincronizado, conflito, erro]
+        conflito:
+          type: object
+          nullable: true
+          description: Presente somente quando status = conflito (RN07, FA-02).
+          properties:
+            motivo:
+              type: string
+              example: "Timestamp mais recente já aplicado para esta chave por outro dispositivo."
+            timestampVencedor:
+              type: string
+              format: date-time
+        erro:
+          type: object
+          nullable: true
+          description: Presente somente quando status = erro (FE-02, FE-03).
+          properties:
+            codigo:
+              type: string
+              example: "SERVIDOR_INDISPONIVEL"
+            mensagem:
+              type: string
+
+    SyncResponse:
+      type: object
+      properties:
+        processadosEm:
+          type: string
+          format: date-time
+        resultados:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncItemResult'
+
+    ErroPadrao:
+      type: object
+      required: [codigo, mensagem]
+      properties:
+        codigo:
+          type: string
+          example: "VALIDACAO_FALHOU"
+        mensagem:
+          type: string
+
+    ErroConflito:
+      type: object
+      required: [codigo, mensagem]
+      properties:
+        codigo:
+          type: string
+          example: "CHAVE_JA_EM_USO"
+        mensagem:
+          type: string
+        responsavelAtual:
+          $ref: '#/components/schemas/Guarda'
+          nullable: true
