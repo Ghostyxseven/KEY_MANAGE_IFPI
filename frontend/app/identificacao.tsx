@@ -9,12 +9,12 @@ type IdentificacaoForm = {
   matricula: string;
 };
 
-export default function IdentificacaoScreen() {
+export default function IdentificacaoScreen(): React.ReactNode {
   const [form, setForm] = useState<IdentificacaoForm>({ nome: "", matricula: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleIdentificacao = async () => {
+  const handleIdentificacao = async (): Promise<void> => {
     const parsed = IdentificacaoRequestSchema.safeParse(form);
 
     if (!parsed.success) {

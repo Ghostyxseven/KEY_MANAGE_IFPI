@@ -9,14 +9,14 @@ type FormData = {
   responsavelMatricula: string;
 };
 
-export default function RetiradaScreen() {
+export default function RetiradaScreen(): React.ReactNode {
   const params = useLocalSearchParams<{ codigo: string }>();
   const codigo = CodigoChaveSchema.parse(params.codigo);
   const [form, setForm] = useState<FormData>({ responsavelNome: "", responsavelMatricula: "" });
   const [enviando, setEnviando] = useState(false);
   const router = useRouter();
 
-  const handleRetirada = async () => {
+  const handleRetirada = async (): Promise<void> => {
     const parsed = RegistroMovimentacaoRequestSchema.safeParse({
       responsavel: { nome: form.responsavelNome, matricula: form.responsavelMatricula },
       timestampLocal: new Date().toISOString(),
@@ -38,7 +38,7 @@ export default function RetiradaScreen() {
 
       if (response.status === 409) {
         const erro = await response.json();
-        Alert.alert("Chave indisponível", erro.mensagem || "Esta chave já está em uso.");
+        Alert.alert("Chave indisponível", erro.mensagem ?? "Esta chave já está em uso.");
         return;
       }
 

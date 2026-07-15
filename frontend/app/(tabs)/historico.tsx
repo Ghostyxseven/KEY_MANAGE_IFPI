@@ -14,12 +14,12 @@ type Movimentacao = {
   syncStatus: string;
 };
 
-export default function HistoricoScreen() {
+export default function HistoricoScreen(): React.ReactNode {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const router = useRouter();
 
-  const carregarHistorico = async () => {
+  const carregarHistorico = async (): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/v1/chaves/A/S9/historico`);
       const data = await response.json();
@@ -36,14 +36,14 @@ export default function HistoricoScreen() {
     carregarHistorico();
   }, []);
 
-  const abrirDetalhe = (codigo: string) => {
+  const abrirDetalhe = (codigo: string): void => {
     const parsed = CodigoChaveSchema.safeParse(codigo);
     if (parsed.success) {
       router.push(`/historico/${codigo}`);
     }
   };
 
-  const renderItem = ({ item }: { item: Movimentacao }) => (
+  const renderItem = ({ item }: { item: Movimentacao }): React.ReactElement => (
     <TouchableOpacity style={styles.card} onPress={() => abrirDetalhe(item.chaveCodigo)}>
       <Text style={styles.codigo}>{item.chaveCodigo}</Text>
       <Text style={styles.tipo}>{item.tipo.toUpperCase()}</Text>

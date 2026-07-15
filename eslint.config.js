@@ -53,6 +53,7 @@ export default tseslint.config(
       "tests/**",
       "eslint.config.js",
       "vitest.config.ts",
+      "frontend/babel.config.js",
     ],
   }
 );

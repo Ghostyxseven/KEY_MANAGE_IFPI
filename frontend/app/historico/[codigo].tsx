@@ -14,13 +14,13 @@ type Movimentacao = {
   syncStatus: string;
 };
 
-export default function HistoricoDetalheScreen() {
+export default function HistoricoDetalheScreen(): React.ReactNode {
   const params = useLocalSearchParams<{ codigo: string }>();
   const codigo = CodigoChaveSchema.parse(params.codigo);
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [carregando, setCarregando] = useState(true);
 
-  const carregarHistorico = async () => {
+  const carregarHistorico = async (): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/v1/chaves/${codigo}/historico`);
       const data = await response.json();
@@ -37,7 +37,7 @@ export default function HistoricoDetalheScreen() {
     carregarHistorico();
   }, [codigo]);
 
-  const renderItem = ({ item }: { item: Movimentacao }) => (
+  const renderItem = ({ item }: { item: Movimentacao }): React.ReactElement => (
     <View style={styles.card}>
       <Text style={styles.tipo}>{item.tipo.toUpperCase()}</Text>
       <Text style={styles.responsavel}>

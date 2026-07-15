@@ -11,12 +11,12 @@ type Chave = {
   ultimaMovimentacaoEm: string | null;
 };
 
-export default function QuadroChavesScreen() {
+export default function QuadroChavesScreen(): React.ReactNode {
   const [chaves, setChaves] = useState<Chave[]>([]);
   const [carregando, setCarregando] = useState(true);
   const router = useRouter();
 
-  const carregarChaves = async () => {
+  const carregarChaves = async (): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/v1/chaves`);
       const data = await response.json();
@@ -33,7 +33,7 @@ export default function QuadroChavesScreen() {
     carregarChaves();
   }, []);
 
-  const abrirRetirada = (codigo: string) => {
+  const abrirRetirada = (codigo: string): void => {
     const parsed = CodigoChaveSchema.safeParse(codigo);
     if (!parsed.success) {
       Alert.alert("Código inválido", "O código da chave não segue o padrão A/S9.");
@@ -42,7 +42,7 @@ export default function QuadroChavesScreen() {
     router.push(`/retirada/${codigo}`);
   };
 
-  const abrirDevolucao = (codigo: string) => {
+  const abrirDevolucao = (codigo: string): void => {
     const parsed = CodigoChaveSchema.safeParse(codigo);
     if (!parsed.success) {
       Alert.alert("Código inválido", "O código da chave não segue o padrão A/S9.");
@@ -51,11 +51,11 @@ export default function QuadroChavesScreen() {
     router.push(`/devolucao/${codigo}`);
   };
 
-  const abrirHistorico = (codigo: string) => {
+  const abrirHistorico = (codigo: string): void => {
     router.push(`/historico/${codigo}`);
   };
 
-  const renderChave = ({ item }: { item: Chave }) => {
+  const renderChave = ({ item }: { item: Chave }): React.ReactElement => {
     const disponivel = item.status === "disponivel";
     return (
       <View style={[styles.card, { borderLeftColor: disponivel ? "#16a34a" : "#dc2626" }]}>

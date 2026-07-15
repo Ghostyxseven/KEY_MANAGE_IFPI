@@ -3,7 +3,7 @@ import { PaperProvider, MD3LightTheme } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 
-export default function RootLayout() {
+export default function RootLayout(): React.ReactNode {
   return (
     <PaperProvider theme={MD3LightTheme}>
       <SafeAreaProvider>
