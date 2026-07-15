@@ -128,7 +128,7 @@ firebase login
 firebase use --add
 ```
 
-#### Opção A — Emulador Firebase (recomendado para desenvolvimento)
+#### Opção A — Emulador Firebase (desenvolvimento local)
 ```bash
 # Terminal 1: iniciar emulador do Firestore
 firebase emulators:start --only firestore
@@ -140,27 +140,27 @@ npm run dev:local
 npm run seed
 ```
 
-#### Opção B — Firebase em nuvem
+#### Opção B — Produção (Render/Railway)
 ```bash
-# Iniciar API conectada ao projeto Firebase real
-npm run dev
+# Build e start locais para produção
+npm run build
+npm start
 ```
 
-A API estará disponível em `http://localhost:3001/v1`.
+A API em produção ficará disponível em `https://coretech-chaves-api.onrender.com/v1`.
 
 ### Frontend — App Expo (mobile)
 ```bash
 cd frontend
 
-# Opcao 1 — Mobile com Expo Go
+# Mobile com Expo Go
 start.bat
 
-# Opcao 2 — Web (navegador, sem Expo Go)
+# Web (navegador)
 start-web.bat
 ```
 
-A versao mobile gera um QR code para escanear com o **Expo Go**.
-A versao web abre em `http://localhost:8081`.
+O app consome a API pela variável `EXPO_PUBLIC_API_URL`.
 
 ### Apenas o servidor API
 ```bash
@@ -171,6 +171,12 @@ npm run dev
 ```bash
 npm run build
 npm start
+```
+
+### Build do APK com EAS Build
+```bash
+cd frontend
+npx eas build --platform android --profile preview
 ```
 
 ## Executando o Harness (Verificação Automática)
