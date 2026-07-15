@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    match /chaves/{codigo} {
+      allow read: if isAuthed();
+      allow update: if isAuthed() && request.resource.data.status in ['disponivel', 'em_uso'];
+      allow create: if isAuthed();
+      allow delete: if false;
+    }
+
+    match /movimentacoes/{id} {
+      allow read: if isAuthed();
+      allow create: if isAuthed();
+      allow update: if isAuthed() && request.resource.data.syncStatus in ['pendente', 'sincronizado', 'erro'];
+      allow delete: if false;
+    }
+  }
+}

@@ -1,13 +1,9 @@
-/**
- * specs/schemas/identificacao.schema.ts
- *
- * Contrato da rota POST /identificacao.
- * Rastreabilidade: RF01, RN02, UC01, US-01, US-02.
- */
 import { z } from "zod";
-import { GuardaSchema } from "./common.schema";
 
-export const IdentificacaoRequestSchema = GuardaSchema;
+export const IdentificacaoRequestSchema = z.object({
+  nome: z.string().min(1, "nome é obrigatório"),
+  matricula: z.string().min(1, "matrícula é obrigatória"),
+});
 export type IdentificacaoRequest = z.infer<typeof IdentificacaoRequestSchema>;
 
 export const IdentificacaoResponseSchema = z.object({
@@ -15,7 +11,7 @@ export const IdentificacaoResponseSchema = z.object({
   sessao: z.object({
     nome: z.string(),
     matricula: z.string(),
-    iniciadaEm: z.string().datetime(),
+    iniciadaEm: z.string(),
   }),
 });
 export type IdentificacaoResponse = z.infer<typeof IdentificacaoResponseSchema>;

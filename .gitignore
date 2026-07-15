@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.firebase
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+.vscode
+.idea
+*.swp
+*.swo
