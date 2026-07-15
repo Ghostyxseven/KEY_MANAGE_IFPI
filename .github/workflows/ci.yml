@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  verify:
+  verify-backend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codigo
@@ -32,3 +32,22 @@ jobs:
 
       - name: Harness completo
         run: npm run verify
+
+  verify-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependencias do frontend
+        working-directory: frontend
+        run: npm ci --legacy-peer-deps
+
+      - name: Lint do frontend
+        working-directory: frontend
+        run: npx eslint . --ext .ts --config eslint.config.js
