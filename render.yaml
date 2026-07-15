@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: coretech-chaves-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FIREBASE_PROJECT_ID
+        value: coretech-chaves
+      - key: FIREBASE_CLIENT_EMAIL
+        value: firebase-adminsdk-fbsvc@coretech-chaves.iam.gserviceaccount.com
+      - key: FIREBASE_PRIVATE_KEY
+        value: "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDi1iT0YVx3T/X/\nkFIpLx96vKN9h268+ERgqssnRjFE+TUDSBdrGeo6sdubo1QlJ0MDAnlfyRZGVSjR\nkCHRnwW46Tg9f9rgQSa4+qorUZrnQXxNfz+QgI14G6UsdBLCOxd6bsnlUeuXFrOP\nrFz1cAc5RbvPsR9DFQO1pjZpfs39HGJPti+Oakfu5lcij1MyJJrxYiE/G9ncL/nM\nNwsZoL2g8PDH90EaFL17tf+Q+yyNSddNfzz0YJ7CVUhGS+qbE+AhPBhZpaPMi7R5\nuh6fVKpm91OHgJ2KvgBHEsrcAZ1aGteC35Bl5TYFEPsSsFQLDBhxJ1s2KBM0G/Oa\nEzSu5n4HAgMBAAECggEAAaHW5pD+x0yaBtdeo7VshyExnsPHNbU3eyOEzl49OvwO\nVfab7u3JX+kT6fPhV2t/ROi1SCL+cZqldukYjkRYXH7jgiRxm3A3PZ0I7OSrmDy5\nn9B2jQ9DeZjv/knb7NQxScF5MKFUo2gb6R6k0P3TvNAPvZkBo1jDqcTYXusXS+Ki\nf4mp+K/eKaZJKg+Nl0nMkT9G1nCvcRqzdqIqSgW9Hm0WymNcCR1ZnIdqfoFHyU26\nI7aWtKvPz0Yo8TKppVDuRbB3oppkeBJedn8SgcMzoyC3axCD6jBrVfjjI1dSXjO/\nAU+VQr/0HhJq+BqmJZ4M50PDH75U8fPiCb1K9KJH5QKBgQDz9u3GadSQWJRLG+Gf\nC0vYq7W3tSvFhGEVa4xcDsDaiqSVc/boDdwQAjmTwDElacLjJBccYDpUBhrHD16m\n8QDrq9RVv9w/7QgO6KCx9Z171xhAJ5aMF2Ta+MpXziPxShvKa7r1hKtoa3eCXtSs\nWED3arX90rHaP2LXGVekgUTmWwKBgQDuBub4KW5nhbfvt5vjNt3nbwjRMzFOYa7q\nmhZEwUhCQN+Jxi0ajybSM7+UcnhUmNo5krVeFvjYjx1Fd6JqM507BV8UOnrMKPZR\njJMLQMF6fmE/0/rojUdqnfIlOir9eu8tYN8PfSFyKqdUHoW6Hre8uwU/w0Qxq/sv\nDpF1CczOxQKBgGgIta61tJJ1Y49/7T+wRoC4AH69gFPzNp82xJ0BIZZQJw0gbXrZ\nZi1hdYIfJBYLOrM30a8lDdqE2+hlEnzoKvdUx/BlJ5wPDS+mXdhln+mOeOXqu9Uz\nqKuECm1VF5iufJleRVSrZZjasxTiMZjo7ZNUaxU5QuSJwTFuuiQJiAMfAoGAcpsq\nLISuXvP4a1iJm244jA1fPnMao3XPJbBJVpOFujjIKOsdnnMcqws1jEFNhNYQBLaJ\n0yLWcFcALgl7Tw1JADkG3ZOGurRiXUOFLV7hiZw+MOBdKAmWQFSKWbhXKLM/ZCcH\nX8rNBs5YwNztYH8X0qxty5S2SgBXsgGesa6lSU0CgYAlVq2o0EJXxcUkdnO4eNsU\nk0ju5HEp9a5xanX7HwDGXLyysH6ZYsOEc4jXJ23xrD8eNmhiN7vR8Wfw4cRUMdfl\nUwhgCub0Oik3a4Ze2QMuOLDRicXUTRRs53s+1pWgIiR/cgAhaBv3sSi21ZrxqhLa\n4C5t0DZa4jzNhjTcORxBTg==\n-----END PRIVATE KEY-----\n"
