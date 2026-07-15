@@ -107,13 +107,46 @@ firebase use --add
 
 ## Executando o Projeto
 
-### Modo desenvolvimento (local)
+### Backend — API + Firebase
 ```bash
-# Inicia servidor Express + emuladores Firebase
-npm run emulators:start
+# 1. Clonar o repositório
+git clone https://github.com/CoreTech-IFPI/coretech-chaves.git
+cd coretech-chaves
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Configurar variaveis de ambiente
+cp .env.example .env
+# Editar .env com as credenciais do Firebase:
+# FIREBASE_PROJECT_ID=coretech-chaves
+# FIREBASE_CLIENT_EMAIL=...
+# FIREBASE_PRIVATE_KEY=...
+
+# 4. Login no Firebase
+firebase login
+firebase use --add
+
+# 5. Iniciar API local
+npm run dev
 ```
 
 A API estará disponível em `http://localhost:3001/v1`.
+
+### Frontend — App Expo (mobile)
+```bash
+cd frontend
+
+# Windows — use o script preparado
+start.bat
+
+# macOS/Linux
+export TEMP="$HOME/.cache"
+export TMP="$HOME/.cache"
+npx expo start
+```
+
+Escaneie o QR code com o **Expo Go** (Android/iOS). O app consome a API em `http://<SEU_IP>:3001/v1`.
 
 ### Apenas o servidor API
 ```bash
