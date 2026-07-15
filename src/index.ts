@@ -31,6 +31,13 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
+if (process.env.USE_FIREBASE_EMULATOR === "true") {
+  db.settings({
+    host: "localhost:8080",
+    ssl: false,
+  });
+}
+
 const keyRepository = new FirestoreKeyRepository(db);
 const movimentacaoRepository = new FirestoreMovimentacaoRepository(db);
 const syncRepository = new FirestoreSyncRepository(db);

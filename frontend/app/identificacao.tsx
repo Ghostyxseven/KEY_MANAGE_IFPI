@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { IdentificacaoRequestSchema } from "../../src/specs/schemas/identificacao.schema";
-import { API_BASE_URL } from "../../constants";
+import { IdentificacaoRequestSchema } from "../src/specs/schemas/identificacao.schema";
+import { API_BASE_URL } from "../constants";
 
 type IdentificacaoForm = {
   nome: string;
