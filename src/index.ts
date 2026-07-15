@@ -18,15 +18,21 @@ import { tratarErros, validarContentType } from "src/api/middleware/error.middle
 const app = express();
 
 if (!getApps().length) {
-  const serviceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID ?? "coretech-chaves",
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "firebase-adminsdk@coretech-chaves.iam.gserviceaccount.com",
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n") ?? "",
-  };
+  if (process.env.USE_FIREBASE_EMULATOR === "true") {
+    initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID ?? "coretech-chaves",
+    });
+  } else {
+    const serviceAccount = {
+      projectId: process.env.FIREBASE_PROJECT_ID ?? "coretech-chaves",
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "firebase-adminsdk@coretech-chaves.iam.gserviceaccount.com",
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n") ?? "",
+    };
 
-  initializeApp({
-    credential: cert(serviceAccount),
-  });
+    initializeApp({
+      credential: cert(serviceAccount),
+    });
+  }
 }
 
 const db = getFirestore();
