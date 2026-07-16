@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { MovimentacaoSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
-import { API_BASE_URL } from "../../constants";
+import { api } from "../../src/services/api";
 
 type Movimentacao = {
   id: string;
@@ -21,8 +21,7 @@ export default function HistoricoScreen(): React.ReactNode {
 
   const carregarHistorico = async (): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/chaves/A/S9/historico`);
-      const data = await response.json();
+      const data = await api.buscarHistorico("A/S9");
       const movimentacoesValidadas = data.map((item: unknown) => MovimentacaoSchema.parse(item));
       setMovimentacoes(movimentacoesValidadas);
     } catch {

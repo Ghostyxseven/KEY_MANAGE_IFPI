@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { MovimentacaoSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
-import { API_BASE_URL } from "../../constants";
+import { api } from "../../src/services/api";
 
 type Movimentacao = {
   id: string;
@@ -22,8 +22,7 @@ export default function HistoricoDetalheScreen(): React.ReactNode {
 
   const carregarHistorico = async (): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/chaves/${codigo}/historico`);
-      const data = await response.json();
+      const data = await api.buscarHistorico(codigo);
       const movimentacoesValidadas = data.map((item: unknown) => MovimentacaoSchema.parse(item));
       setMovimentacoes(movimentacoesValidadas);
     } catch {

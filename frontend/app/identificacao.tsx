@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { IdentificacaoRequestSchema } from "../src/specs/schemas/identificacao.schema";
-import { API_BASE_URL } from "../constants";
+import { api } from "../src/services/api";
 
 type IdentificacaoForm = {
   nome: string;
@@ -24,19 +24,10 @@ export default function IdentificacaoScreen(): React.ReactNode {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/identificacao`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed.data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Falha na identificação");
-      }
-
+      await api.identificar(parsed.data);
       router.replace("/(tabs)/quadro");
-    } catch {
-      Alert.alert("Erro", "Não foi possível realizar a identificação. Tente novamente.");
+    } catch (error) {
+      Alert.alert("Erro", error instanceof Error ? error.message : "Não foi possível realizar a identificação. Tente novamente.");
     } finally {
       setLoading(false);
     }

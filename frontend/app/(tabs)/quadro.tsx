@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { ChaveSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
-import { API_BASE_URL } from "../../constants";
+import { api } from "../../src/services/api";
 
 type Chave = {
   codigo: string;
@@ -18,9 +18,7 @@ export default function QuadroChavesScreen(): React.ReactNode {
 
   const carregarChaves = async (): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/chaves`);
-      const data = await response.json();
-      const chavesValidadas = data.map((item: unknown) => ChaveSchema.parse(item));
+      const chavesValidadas = await api.listarChaves().then(data => data.map((item: unknown) => ChaveSchema.parse(item)));
       setChaves(chavesValidadas);
     } catch {
       Alert.alert("Erro", "Não foi possível carregar as chaves.");

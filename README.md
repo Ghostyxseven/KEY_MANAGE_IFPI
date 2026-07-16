@@ -130,12 +130,11 @@ npm run dev
 #### Deploy em produção (Render)
 1. Acesse https://dashboard.render.com
 2. Clique em **New +** → **Blueprint**
-3. Conecte o repositório `WesleyTiagg/KEY_MANAGE_IFPI`
-4. Configure as variáveis de ambiente:
-   - `FIREBASE_PROJECT_ID` = `coretech-chaves`
-   - `FIREBASE_CLIENT_EMAIL` = `firebase-adminsdk-fbsvc@coretech-chaves.iam.gserviceaccount.com`
-   - `FIREBASE_PRIVATE_KEY` = sua private key do Firebase
-5. Clique em **Apply** e aguarde o deploy
+3. Conecte o repositório `Nilson-Rodrigo/KEY_MANAGE_IFPI`
+4. O `render.yaml` será detectado automaticamente
+5. Adicione a variável de ambiente faltante no dashboard do Render:
+   - `FIREBASE_PRIVATE_KEY` = sua private key do Firebase (não comite este valor)
+6. Clique em **Apply** e aguarde o deploy
 
 A API em produção ficará disponível em `https://coretech-chaves-api.onrender.com/v1`.
 

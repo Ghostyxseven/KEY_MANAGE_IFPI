@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { RegistroMovimentacaoRequestSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
-import { API_BASE_URL } from "../../constants";
+import { api } from "../../src/services/api";
 
 type FormData = {
   responsavelNome: string;
@@ -30,26 +30,15 @@ export default function RetiradaScreen(): React.ReactNode {
 
     setEnviando(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/chaves/${codigo}/retirada`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed.data),
-      });
-
-      if (response.status === 409) {
-        const erro = await response.json();
-        Alert.alert("Chave indisponível", erro.mensagem ?? "Esta chave já está em uso.");
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error("Falha na retirada");
-      }
-
+      await api.retirarChave(codigo, parsed.data);
       Alert.alert("Sucesso", "Retirada registrada com sucesso.", [
         { text: "OK", onPress: (): void => router.back() },
       ]);
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && "status" in error && (error as Error & { status: number }).status === 409) {
+        Alert.alert("Chave indisponível", error.message ?? "Esta chave já está em uso.");
+        return;
+      }
       Alert.alert("Erro", "Não foi possível registrar a retirada.");
     } finally {
       setEnviando(false);
