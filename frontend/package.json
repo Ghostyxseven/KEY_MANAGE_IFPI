@@ -7,7 +7,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build": "expo export -p web",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@expo-google-fonts/material-symbols": "^0.4.41",
