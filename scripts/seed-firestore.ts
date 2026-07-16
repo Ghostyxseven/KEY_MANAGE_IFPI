@@ -1,4 +1,7 @@
 import { initializeApp, getApps } from "firebase-admin/app";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const USE_EMULATOR = process.env.USE_FIREBASE_EMULATOR === "true";
 
@@ -45,7 +48,7 @@ async function main(): Promise<void> {
   console.log("Populando Firestore emulado com chaves...");
 
   for (const chave of chaves) {
-    await db.collection("chaves").doc(chave.codigo).set(chave);
+    await db.collection("chaves").add({ ...chave, codigo: chave.codigo });
     console.log("Chave cadastrada:", chave.codigo, chave.status);
   }
 
