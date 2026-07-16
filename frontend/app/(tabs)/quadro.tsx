@@ -20,7 +20,8 @@ export default function QuadroChavesScreen(): React.ReactNode {
     try {
       const chavesValidadas = await api.listarChaves().then(data => data.map((item: unknown) => ChaveSchema.parse(item)));
       setChaves(chavesValidadas);
-    } catch {
+    } catch (error) {
+      console.error("Erro ao carregar chaves:", error);
       Alert.alert("Erro", "Não foi possível carregar as chaves.");
     } finally {
       setCarregando(false);
@@ -55,14 +56,14 @@ export default function QuadroChavesScreen(): React.ReactNode {
 
   const renderChave = ({ item }: { item: Chave }): React.ReactElement => {
     const disponivel = item.status === "disponivel";
+    const cardColor = disponivel ? "#dcfce7" : "#fee2e2";
+
     return (
-      <View style={[styles.card, { borderLeftColor: disponivel ? "#16a34a" : "#dc2626" }]}>
+      <View style={[styles.card, { backgroundColor: cardColor, borderLeftColor: disponivel ? "#16a34a" : "#dc2626" }]}>
         <View style={styles.header}>
-          <Text style={styles.codigo}>{item.codigo}</Text>
-          <View style={[styles.badge, { backgroundColor: disponivel ? "#dcfce7" : "#fee2e2" }]}>
-            <Text style={[styles.badgeText, { color: disponivel ? "#16a34a" : "#dc2626" }]}>
-              {disponivel ? "Disponível" : "Em uso"}
-            </Text>
+          <Text style={[styles.codigo, { color: "#111827" }]}>{item.codigo}</Text>
+          <View style={[styles.badge, { backgroundColor: disponivel ? "#16a34a" : "#dc2626" }]}>
+            <Text style={styles.badgeText}>{disponivel ? "Disponível" : "Em uso"}</Text>
           </View>
         </View>
 
@@ -74,19 +75,19 @@ export default function QuadroChavesScreen(): React.ReactNode {
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
+            style={[styles.button, disponivel ? styles.primaryButton : styles.disabledButton]}
             onPress={() => abrirRetirada(item.codigo)}
             disabled={!disponivel}
           >
-            <Text style={styles.primaryButtonText}>Retirar</Text>
+            <Text style={[styles.buttonText, disponivel && styles.primaryButtonText]}>Retirar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, styles.secondaryButton]}
+            style={[styles.button, !disponivel ? styles.secondaryButton : styles.disabledButton]}
             onPress={() => abrirDevolucao(item.codigo)}
             disabled={disponivel}
           >
-            <Text style={styles.secondaryButtonText}>Devolver</Text>
+            <Text style={[styles.buttonText, !disponivel && styles.secondaryButtonText]}>Devolver</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.button, styles.ghostButton]} onPress={() => abrirHistorico(item.codigo)}>
@@ -132,10 +133,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
-    borderLeftWidth: 6,
+    borderLeftWidth: 8,
     gap: 8,
   },
   header: {
@@ -144,17 +144,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   codigo: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
   },
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 999,
   },
   badgeText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "bold",
+    color: "#fff",
   },
   responsavel: {
     fontSize: 14,
@@ -174,14 +175,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   primaryButton: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#16a34a",
+  },
+  secondaryButton: {
+    backgroundColor: "#dc2626",
+  },
+  disabledButton: {
+    backgroundColor: "#d1d5db",
+  },
+  buttonText: {
+    color: "#6b7280",
+    fontWeight: "bold",
   },
   primaryButtonText: {
     color: "#fff",
     fontWeight: "bold",
-  },
-  secondaryButton: {
-    backgroundColor: "#f97316",
   },
   secondaryButtonText: {
     color: "#fff",

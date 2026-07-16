@@ -34,6 +34,7 @@ export default tseslint.config(
       "dist/**",
       ".expo/**",
       "babel.config.js",
+      "babel.config.mjs",
       "eslint.config.js",
     ],
   }
