@@ -1,39 +1,68 @@
 import { API_BASE_URL } from "../../constants";
 import { storage, MovimentacaoPending } from "./storage";
 
+/** Dados necessários para identificar um usuário no sistema */
 export type IdentificacaoPayload = {
+  /** Nome completo do usuário */
   nome: string;
+  /** Matrícula ou identificador do usuário */
   matricula: string;
 };
 
+/** Dados necessários para registrar uma movimentação de chave */
 export type MovimentacaoPayload = {
+  /** Responsável pela movimentação (nome e matrícula) */
   responsavel: { nome: string; matricula: string };
+  /** Data/hora local da operação em formato ISO */
   timestampLocal: string;
+  /** Identificador único do dispositivo que realizou a operação */
   deviceId: string;
 };
 
+/** Representa uma chave no sistema */
 export type Chave = {
+  /** Código identificador da chave (ex: A1, S5) */
   codigo: string;
+  /** Status atual: disponível ou em uso */
   status: "disponivel" | "em_uso";
+  /** Responsável atual pela chave, se estiver em uso */
   responsavelAtual: { nome: string; matricula: string } | null;
+  /** Data/hora da última movimentação registrada */
   ultimaMovimentacaoEm: string | null;
 };
 
+/** Representa uma movimentação registrada no sistema */
 export type Movimentacao = {
+  /** Identificador único da movimentação */
   id: string;
+  /** Código da chave relacionada à movimentação */
   chaveCodigo: string;
+  /** Tipo de operação: retirada ou devolução */
   tipo: "retirada" | "devolucao";
+  /** Responsável pela movimentação */
   responsavel: { nome: string; matricula: string };
+  /** Data/hora local da operação */
   timestampLocal: string;
+  /** ID do dispositivo onde a operação foi realizada */
   deviceId: string;
+  /** Status de sincronização com o servidor */
   syncStatus: string;
 };
 
+/** Estrutura de erro retornado pela API */
 export type ApiError = {
+  /** Código do erro para tratamento programático */
   codigo: string;
+  /** Mensagem descritiva do erro */
   mensagem: string;
 };
 
+/**
+ * Processa respostas HTTP da API, lançando erros formatados para respostas não-ok.
+ * @param response - Objeto Response da fetch API
+ * @returns Dados JSON tipificados ou undefined para status 204
+ * @throws Erro formatado com status e código para respostas de falha
+ */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const erro: ApiError = await response.json().catch(() => ({
@@ -51,7 +80,15 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+/**
+ * Serviço de comunicação com a API REST do backend.
+ * Gerencia requisições HTTP e sincronização offline.
+ */
 export const api = {
+  /**
+   * Registra uma identificação de usuário no sistema.
+   * @param payload - Dados de identificação (nome e matrícula)
+   */
   async identificar(payload: IdentificacaoPayload): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/v1/identificacao`, {
       method: "POST",
@@ -61,6 +98,11 @@ export const api = {
     await handleResponse(response);
   },
 
+  /**
+   * Lista todas as chaves disponíveis no sistema.
+   * Funciona offline retornando dados em cache quando não há conexão.
+   * @returns Array de chaves cadastradas
+   */
   async listarChaves(): Promise<Chave[]> {
     const { isConnected } = await storage.getNetworkStatus();
     
@@ -84,11 +126,23 @@ export const api = {
     }
   },
 
+  /**
+   * Busca os detalhes de uma chave específica pelo código.
+   * @param codigo - Código identificador da chave
+   * @returns Dados completos da chave
+   */
   async buscarChave(codigo: string): Promise<Chave> {
     const response = await fetch(`${API_BASE_URL}/v1/chaves/${encodeURIComponent(codigo)}`);
     return handleResponse<Chave>(response);
   },
 
+  /**
+   * Registra a retirada de uma chave.
+   * Em modo offline, salva a operação para sincronização posterior.
+   * @param codigo - Código da chave a ser retirada
+   * @param payload - Dados da movimentação (responsável, timestamp, deviceId)
+   * @returns Objeto com a chave atualizada e a movimentação registrada
+   */
   async retirarChave(codigo: string, payload: MovimentacaoPayload): Promise<{ chave: Chave; movimentacao: Movimentacao }> {
     const { isConnected } = await storage.getNetworkStatus();
     
@@ -129,6 +183,13 @@ export const api = {
     return handleResponse<{ chave: Chave; movimentacao: Movimentacao }>(response);
   },
 
+  /**
+   * Registra a devolução de uma chave.
+   * Em modo offline, salva a operação para sincronização posterior.
+   * @param codigo - Código da chave a ser devolvida
+   * @param payload - Dados da movimentação (responsável, timestamp, deviceId)
+   * @returns Objeto com a chave atualizada e a movimentação registrada
+   */
   async devolverChave(codigo: string, payload: MovimentacaoPayload): Promise<{ chave: Chave; movimentacao: Movimentacao }> {
     const { isConnected } = await storage.getNetworkStatus();
     
@@ -169,12 +230,21 @@ export const api = {
     return handleResponse<{ chave: Chave; movimentacao: Movimentacao }>(response);
   },
 
+  /**
+   * Busca o histórico de movimentações de uma chave específica.
+   * @param codigo - Código da chave
+   * @returns Array de movimentações históricas
+   */
   async buscarHistorico(codigo: string): Promise<Movimentacao[]> {
     const response = await fetch(`${API_BASE_URL}/v1/chaves/${encodeURIComponent(codigo)}/historico`);
     return handleResponse<Movimentacao[]>(response);
   },
 
-  // Sincroniza movimentações pendentes quando voltar online
+  /**
+   * Sincroniza todas as movimentações pendentes armazenadas localmente.
+   * Deve ser chamado quando a conexão for restabelecida.
+   * As operações são enviadas na ordem em que foram registradas.
+   */
   async sincronizarPendencias(): Promise<void> {
     const { isConnected } = await storage.getNetworkStatus();
     if (!isConnected) {
