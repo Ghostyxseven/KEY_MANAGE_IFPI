@@ -1,27 +1,13 @@
-import { initializeApp, getApps } from "firebase-admin/app";
 import dotenv from "dotenv";
+import { initializeFirebaseAdmin } from "./lib/firebase-admin.js";
+import { codificarCodigoChave } from "./lib/firestore-key.js";
 
 dotenv.config();
 
 const USE_EMULATOR = process.env.USE_FIREBASE_EMULATOR === "true";
 
 async function initializeFirebase(): Promise<void> {
-  if (!getApps().length) {
-    if (USE_EMULATOR) {
-      initializeApp({
-        projectId: process.env.FIREBASE_PROJECT_ID ?? "coretech-chaves",
-      });
-    } else {
-      const { cert } = await import("firebase-admin/app");
-      initializeApp({
-        credential: cert({
-          projectId: process.env.FIREBASE_PROJECT_ID ?? "coretech-chaves",
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "firebase-adminsdk@coretech-chaves.iam.gserviceaccount.com",
-          privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? "").replace(/\\n/g, "\n"),
-        }),
-      });
-    }
-  }
+  initializeFirebaseAdmin({ useEmulator: USE_EMULATOR });
 }
 
 async function main(): Promise<void> {
@@ -48,7 +34,7 @@ async function main(): Promise<void> {
   console.log("Populando Firestore emulado com chaves...");
 
   for (const chave of chaves) {
-    await db.collection("chaves").add({ ...chave, codigo: chave.codigo });
+    await db.collection("chaves").doc(codificarCodigoChave(chave.codigo)).set(chave);
     console.log("Chave cadastrada:", chave.codigo, chave.status);
   }
 

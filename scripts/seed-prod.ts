@@ -1,16 +1,12 @@
-import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import dotenv from "dotenv";
+import { initializeFirebaseAdmin } from "./lib/firebase-admin.js";
+import { codificarCodigoChave } from "./lib/firestore-key.js";
+
+dotenv.config();
 
 async function main(): Promise<void> {
-  if (!getApps().length) {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID ?? "coretech-chaves",
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "firebase-adminsdk-fbsvc@coretech-chaves.iam.gserviceaccount.com",
-        privateKey: (process.env.FIREBASE_PRIVATE_KEY ?? "").replace(/\\n/g, "\n"),
-      }),
-    });
-  }
+  initializeFirebaseAdmin();
 
   const db = getFirestore();
 
@@ -27,7 +23,7 @@ async function main(): Promise<void> {
   console.log("Populando Firestore de produção com chaves...");
 
   for (const chave of chaves) {
-    await db.collection("chaves").doc(chave.codigo).set(chave);
+    await db.collection("chaves").doc(codificarCodigoChave(chave.codigo)).set(chave);
     console.log("Chave cadastrada:", chave.codigo, chave.status);
   }
 

@@ -1,22 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAuthed() {
-      return request.auth != null;
-    }
+    function signedIn() { return request.auth != null; }
+    function profilePath() { return /databases/$(database)/documents/usuarios/$(request.auth.uid); }
+    function hasProfile() { return signedIn() && exists(profilePath()); }
+    function profile() { return get(profilePath()).data; }
+    function active() { return hasProfile() && profile().ativo == true; }
+    function admin() { return active() && profile().perfil == 'admin'; }
+    function guard() { return active() && profile().perfil == 'guarda'; }
+    function validPerson(person) { return person is map && person.keys().hasOnly(['nome', 'matricula']) && person.nome == profile().nome && person.matricula == profile().matricula; }
+    function validUser(data, uid) { return data.keys().hasOnly(['uid', 'nome', 'matricula', 'perfil', 'ativo', 'criadoEm', 'atualizadoEm']) && data.uid == uid && data.nome is string && data.nome.size() >= 2 && data.nome.size() <= 120 && data.matricula is string && data.matricula.size() >= 1 && data.matricula.size() <= 40 && data.perfil in ['admin', 'guarda'] && data.ativo is bool; }
+    function validMovement(data, movementId) { return guard() && data.keys().hasOnly(['id', 'chaveCodigo', 'tipo', 'responsavel', 'timestampLocal', 'deviceId', 'syncStatus', 'autorUid', 'chaveId']) && data.id == movementId && data.chaveCodigo is string && data.tipo in ['retirada', 'devolucao'] && validPerson(data.responsavel) && data.timestampLocal is timestamp && data.timestampLocal <= request.time && data.deviceId is string && data.deviceId.size() >= 1 && data.deviceId.size() <= 200 && data.syncStatus == 'sincronizado' && data.autorUid == request.auth.uid && data.chaveId is string; }
 
-    match /chaves/{codigo} {
-      allow read: if isAuthed();
-      allow update: if isAuthed() && request.resource.data.status in ['disponivel', 'em_uso'];
-      allow create: if isAuthed();
+    match /usuarios/{uid} {
+      allow get: if admin() || (signedIn() && request.auth.uid == uid);
+      allow list: if admin();
+      allow create: if admin() && validUser(request.resource.data, uid) && request.resource.data.perfil == 'guarda';
+      allow update: if admin() && validUser(request.resource.data, uid) && request.resource.data.uid == resource.data.uid && request.resource.data.matricula == resource.data.matricula && request.resource.data.perfil == resource.data.perfil;
       allow delete: if false;
     }
-
-    match /movimentacoes/{id} {
-      allow read: if isAuthed();
-      allow create: if isAuthed();
-      allow update: if isAuthed() && request.resource.data.syncStatus in ['pendente', 'sincronizado', 'erro'];
+    match /acessos/{matricula} {
+      allow get: if true;
+      allow list: if admin();
+      allow create, update: if admin() && request.resource.data.keys().hasOnly(['uid', 'authEmail', 'ativo', 'criadoEm', 'atualizadoEm']) && request.resource.data.uid is string && request.resource.data.authEmail is string && request.resource.data.ativo is bool;
       allow delete: if false;
     }
+    match /chaves/{keyId} {
+      allow read: if active();
+      allow create, delete: if false;
+      allow update: if guard() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responsavelAtual', 'ultimaMovimentacaoEm', 'ultimaMovimentacaoId']) && request.resource.data.codigo == resource.data.codigo && request.resource.data.ultimaMovimentacaoEm is timestamp && request.resource.data.ultimaMovimentacaoId is string && ((resource.data.status == 'disponivel' && request.resource.data.status == 'em_uso' && validPerson(request.resource.data.responsavelAtual)) || (resource.data.status == 'em_uso' && request.resource.data.status == 'disponivel' && request.resource.data.responsavelAtual == null)) && getAfter(/databases/$(database)/documents/movimentacoes/$(request.resource.data.ultimaMovimentacaoId)).data.autorUid == request.auth.uid;
+    }
+    match /movimentacoes/{movementId} {
+      allow read: if active();
+      allow create: if validMovement(request.resource.data, movementId) && getAfter(/databases/$(database)/documents/chaves/$(request.resource.data.chaveId)).data.ultimaMovimentacaoId == movementId;
+      allow update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
   }
 }

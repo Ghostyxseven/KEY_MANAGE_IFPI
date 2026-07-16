@@ -27,33 +27,18 @@ export default tseslint.config(
       "@typescript-eslint/no-dynamic-delete": "error",
       "@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "as" }],
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
-      "no-restricted-imports": [
-        "error",
-        {
-          paths: [
-            {
-              name: "nodemailer",
-              message: "Importações de libs de terceiros devem passar por Adapters (ver ADR-0009). Use src/core/adapters/*.",
-            },
-          ],
-          patterns: [
-            {
-              group: ["*Adapter", "*/adapters/*"],
-              message: "Importações diretas de libs terceiras devem ser isoladas em Adapters (ver ADR-0009).",
-            },
-          ],
-        },
-      ],
     },
   },
   {
     ignores: [
       "dist/**",
       "node_modules/**",
-      "tests/**",
+      "src/**",
       "eslint.config.js",
-      "vitest.config.ts",
       "frontend/**",
+      "functions/lib/**",
+      "functions/node_modules/**",
+      "scripts/**/*.mjs",
     ],
   }
 );

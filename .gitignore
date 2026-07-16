@@ -1,10 +1,15 @@
-```
 # Dependencies
 node_modules/
 
 # Build artifacts
 dist/
 build/
+.firebase-cli-temp/
+functions/lib/
+.firebase/
+frontend/.expo/
+frontend/dist/
+coverage/
 *.js.map
 *.tsbuildinfo
 
@@ -12,6 +17,13 @@ build/
 .env
 .env.local
 *.env.*
+
+# Firebase Admin credentials (private)
+*firebase-adminsdk*.json
+service-account*.json
+*-firebase-adminsdk-*.json
+google-services.json
+**/google-services.json
 
 # Editors
 .vscode/
@@ -33,4 +45,9 @@ __pycache__/
 .Python
 venv/
 .venv/
-```
+
+# AI and Agent Tools
+.agents/
+.antigravity/
+.specify/
+agent-os/
