@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { ChavesService } from "../../src/features/chaves/chaves.service";
-import { CheckoutStrategy } from "../../src/features/chaves/strategies/checkout.strategy";
-import { ReturnStrategy } from "../../src/features/chaves/strategies/return.strategy";
-import type { Chave, IKeyRepository, IMovimentacaoRepository } from "../../src/core/interfaces";
-import { StatusChave } from "../../src/core/types";
+import { ChavesService } from "../../src/features/chaves/chaves.service.js";
+import { CheckoutStrategy } from "../../src/features/chaves/strategies/checkout.strategy.js";
+import { ReturnStrategy } from "../../src/features/chaves/strategies/return.strategy.js";
+import type { Chave, IKeyRepository, IMovimentacaoRepository } from "../../src/core/interfaces/index.js";
+import { StatusChave } from "../../src/core/types/index.js";
 
 describe("ChavesService — Contratos de Negócio", () => {
   let mockKeyRepo: IKeyRepository;

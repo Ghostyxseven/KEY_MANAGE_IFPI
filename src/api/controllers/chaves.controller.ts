@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import type { ChavesService } from "src/features/chaves/chaves.service";
-import { RegistroMovimentacaoRequestSchema, CodigoChaveSchema } from "src/specs/schemas/chaves.schema";
-import { ChaveSchema } from "src/specs/schemas/chaves.schema";
+import type { ChavesService } from "../../features/chaves/chaves.service.js";
+import { RegistroMovimentacaoRequestSchema, CodigoChaveSchema } from "../../specs/schemas/chaves.schema.js";
+import { ChaveSchema } from "../../specs/schemas/chaves.schema.js";
 
 export class ChavesController {
   constructor(private readonly chavesService: ChavesService) {}
@@ -49,7 +49,7 @@ export class ChavesController {
   };
 
   retirarChave = async (
-    req: Request<{ codigo: string }, unknown, import("src/specs/schemas/chaves.schema").RegistroMovimentacaoRequest>,
+    req: Request<{ codigo: string }, unknown, import("../../specs/schemas/chaves.schema.js").RegistroMovimentacaoRequest>,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
@@ -65,7 +65,7 @@ export class ChavesController {
   };
 
   devolverChave = async (
-    req: Request<{ codigo: string }, unknown, import("src/specs/schemas/chaves.schema").RegistroMovimentacaoRequest>,
+    req: Request<{ codigo: string }, unknown, import("../../specs/schemas/chaves.schema.js").RegistroMovimentacaoRequest>,
     res: Response,
     next: NextFunction
   ): Promise<void> => {

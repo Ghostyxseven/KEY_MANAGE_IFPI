@@ -1,12 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
-import type { SyncService } from "src/features/sync/sync.service";
-import { SyncRequestSchema, SyncResponseSchema } from "src/specs/schemas/sync.schema";
+import type { SyncService } from "../../features/sync/sync.service.js";
+import { SyncRequestSchema, SyncResponseSchema } from "../../specs/schemas/sync.schema.js";
 
 export class SyncController {
   constructor(private readonly syncService: SyncService) {}
 
   sincronizar = async (
-    req: Request<unknown, unknown, import("src/specs/schemas/sync.schema").SyncRequest>,
+    req: Request<unknown, unknown, import("../../specs/schemas/sync.schema.js").SyncRequest>,
     res: Response,
     next: NextFunction
   ): Promise<void> => {

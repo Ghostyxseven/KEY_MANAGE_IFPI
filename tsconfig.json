@@ -21,7 +21,6 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true
-    // <--- A linha do "ignoreDeprecations" foi removida daqui!
   },
   "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist", "eslint.config.js", "vitest.config.ts"]

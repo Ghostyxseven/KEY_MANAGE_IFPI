@@ -1,5 +1,5 @@
 import { Firestore, QueryDocumentSnapshot, Timestamp } from "firebase-admin/firestore";
-import type { Chave, Movimentacao } from "src/core/types";
+import type { Chave, Movimentacao } from "../types/index.js";
 
 export class FirestoreKeyRepository {
   constructor(private readonly db: Firestore) {}
