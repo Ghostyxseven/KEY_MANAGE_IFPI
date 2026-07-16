@@ -22,6 +22,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts"],
-  "exclude": ["node_modules", "dist", "eslint.config.js", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules", "dist", "eslint.config.js", "vitest.config.ts", "tests"]
 }
