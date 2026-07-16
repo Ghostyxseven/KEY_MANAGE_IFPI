@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MovimentacaoSchema } from "./chaves.schema";
+import { MovimentacaoSchema } from "./chaves.schema.js";
 
 export const SyncRequestSchema = z.object({
   deviceId: z.string().min(1, "deviceId é obrigatório"),

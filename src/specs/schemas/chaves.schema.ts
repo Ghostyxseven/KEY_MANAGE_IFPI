@@ -5,10 +5,10 @@ import {
   StatusChaveSchema,
   SyncStatusSchema,
   TipoMovimentacaoSchema,
-} from "./common.schema";
+} from "./common.schema.js";
 
 export { CodigoChaveSchema };
-export type { CodigoChave } from "./common.schema";
+export type { CodigoChave } from "./common.schema.js";
 
 export const ChaveSchema = z.object({
   codigo: CodigoChaveSchema,

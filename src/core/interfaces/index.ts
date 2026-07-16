@@ -1,6 +1,6 @@
-import type { Chave, RegistroMovimentacao, ErroConflito, Movimentacao } from "../types";
+import type { Chave, RegistroMovimentacao, ErroConflito, Movimentacao } from "../types/index.js";
 
-export type { Chave, RegistroMovimentacao, ErroConflito, Movimentacao, ItemResultadoSync, ResultadoSync } from "../types";
+export type { Chave, RegistroMovimentacao, ErroConflito, Movimentacao, ItemResultadoSync, ResultadoSync } from "../types/index.js";
 
 export type IKeyOperationStrategy = {
   executar(
@@ -54,7 +54,7 @@ export type ISyncService = {
   sincronizar(
     deviceId: string,
     registros: Movimentacao[]
-  ): Promise<{ processadosEm: string; resultados: import("../types").ItemResultadoSync[] }>;
+  ): Promise<{ processadosEm: string; resultados: import("../types/index.js").ItemResultadoSync[] }>;
 };
 
 export type ISyncObserver = {

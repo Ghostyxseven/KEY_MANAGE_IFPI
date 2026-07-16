@@ -1,4 +1,4 @@
-import type { Movimentacao, ISyncRepository, ResultadoSync, ItemResultadoSync } from "src/core/interfaces";
+import type { Movimentacao, ISyncRepository, ResultadoSync, ItemResultadoSync } from "../../core/interfaces/index.js";
 
 export class SyncService {
   constructor(private readonly syncRepository: ISyncRepository) {}

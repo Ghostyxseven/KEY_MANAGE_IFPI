@@ -1,4 +1,4 @@
-import type { Chave, RegistroMovimentacao, ErroConflito, Movimentacao, IKeyRepository } from "src/core/interfaces";
+import type { Chave, RegistroMovimentacao, ErroConflito, Movimentacao, IKeyRepository } from "../../../core/interfaces/index.js";
 import { v4 as uuidv4 } from "uuid";
 
 export class CheckoutStrategy {

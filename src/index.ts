@@ -5,15 +5,15 @@ import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import express from "express";
 import cors from "cors";
-import { criarRotas } from "src/api/routes";
-import { FirestoreKeyRepository } from "src/core/repositories/firestore.repository";
-import { FirestoreMovimentacaoRepository } from "src/core/repositories/firestore.repository";
-import { FirestoreSyncRepository } from "src/core/repositories/firestore.repository";
-import { ChavesService } from "src/features/chaves/chaves.service";
-import { SyncService } from "src/features/sync/sync.service";
-import { CheckoutStrategy } from "src/features/chaves/strategies/checkout.strategy";
-import { ReturnStrategy } from "src/features/chaves/strategies/return.strategy";
-import { tratarErros, validarContentType } from "src/api/middleware/error.middleware";
+import { criarRotas } from "./api/routes/index.js";
+import { FirestoreKeyRepository } from "./core/repositories/firestore.repository.js";
+import { FirestoreMovimentacaoRepository } from "./core/repositories/firestore.repository.js";
+import { FirestoreSyncRepository } from "./core/repositories/firestore.repository.js";
+import { ChavesService } from "./features/chaves/chaves.service.js";
+import { SyncService } from "./features/sync/sync.service.js";
+import { CheckoutStrategy } from "./features/chaves/strategies/checkout.strategy.js";
+import { ReturnStrategy } from "./features/chaves/strategies/return.strategy.js";
+import { tratarErros, validarContentType } from "./api/middleware/error.middleware.js";
 
 const app = express();
 

@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { IdentificacaoController } from "src/api/controllers/identificacao.controller";
-import { ChavesController } from "src/api/controllers/chaves.controller";
-import { SyncController } from "src/api/controllers/sync.controller";
-import type { ChavesService } from "src/features/chaves/chaves.service";
-import type { SyncService } from "src/features/sync/sync.service";
+import { IdentificacaoController } from "../controllers/identificacao.controller.js";
+import { ChavesController } from "../controllers/chaves.controller.js";
+import { SyncController } from "../controllers/sync.controller.js";
+import type { ChavesService } from "../../features/chaves/chaves.service.js";
+import type { SyncService } from "../../features/sync/sync.service.js";
 
 export function criarRotas(
   chavesService: ChavesService,

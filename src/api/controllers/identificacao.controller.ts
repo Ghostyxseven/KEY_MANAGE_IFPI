@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { IdentificacaoRequest, IdentificacaoResponse } from "src/specs/schemas/identificacao.schema";
+import type { IdentificacaoRequest, IdentificacaoResponse } from "../../specs/schemas/identificacao.schema.js";
 
 export class IdentificacaoController {
   registrarIdentificacao = async (

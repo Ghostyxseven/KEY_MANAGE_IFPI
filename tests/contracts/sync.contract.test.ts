@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { SyncService } from "../../src/features/sync/sync.service";
-import type { ISyncRepository } from "../../src/core/interfaces";
-import type { ItemResultadoSync, Movimentacao } from "../../src/core/types";
+import { SyncService } from "../../src/features/sync/sync.service.js";
+import type { ISyncRepository } from "../../src/core/interfaces/index.js";
+import type { ItemResultadoSync, Movimentacao } from "../../src/core/types/index.js";
 
 /// <reference types="vitest/globals" />
 

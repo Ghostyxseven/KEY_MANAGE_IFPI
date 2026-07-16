@@ -5,7 +5,7 @@ import type {
   IKeyRepository,
   IMovimentacaoRepository,
   IKeyOperationStrategy,
-} from "src/core/interfaces";
+} from "../../core/interfaces/index.js";
 
 export class ChavesService {
   constructor(
