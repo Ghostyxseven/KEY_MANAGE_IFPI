@@ -237,7 +237,19 @@ export const api = {
    */
   async buscarHistorico(codigo: string): Promise<Movimentacao[]> {
     const response = await fetch(`${API_BASE_URL}/v1/chaves/${encodeURIComponent(codigo)}/historico`);
-    return handleResponse<Movimentacao[]>(response);
+    const data = await handleResponse<unknown[]>(response);
+    return data.map((item: unknown) => {
+      const obj = item as Record<string, unknown>;
+      return {
+        id: (obj.id ?? "") as string,
+        chaveCodigo: ((obj as Record<string, unknown>).chaveCodigo ?? (obj as Record<string, unknown>).codigoChave ?? codigo) as string,
+        tipo: ((obj as Record<string, unknown>).tipo ?? "retirada") as Movimentacao["tipo"],
+        responsavel: ((obj as Record<string, unknown>).responsavel ?? { nome: "", matricula: "" }) as Movimentacao["responsavel"],
+        timestampLocal: ((obj as Record<string, unknown>).timestampLocal ?? (obj as Record<string, unknown>).timestamp ?? "") as string,
+        deviceId: ((obj as Record<string, unknown>).deviceId ?? "") as string,
+        syncStatus: ((obj as Record<string, unknown>).syncStatus ?? "") as string,
+      };
+    });
   },
 
   /**
