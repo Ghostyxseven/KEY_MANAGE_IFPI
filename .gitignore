@@ -1,14 +1,67 @@
-node_modules
-dist
-coverage
-.firebase
-*.log
-.DS_Store
-Thumbs.db
+```
+# Dependencies
+node_modules/
+
+# Environment
 .env
+.env.local
 .env.*
-!.env.example
-.vscode
-.idea
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
 *.swp
-*.swo
+
+# Editors
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+.env
+.env.local
+.env.*
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+.env
+.env.local
+.env.*
+dist/
+build/
+.nyc_output/
+coverage/
+*.lcov
+.next/
+out/
+
+# Compiled and binary files
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
+```

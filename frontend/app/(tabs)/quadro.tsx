@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { ChaveSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
 import { api } from "../../src/services/api";
+import { storage } from "../../src/services/storage";
 
 type Chave = {
   codigo: string;
@@ -14,15 +15,29 @@ type Chave = {
 export default function QuadroChavesScreen(): React.ReactNode {
   const [chaves, setChaves] = useState<Chave[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [offline, setOffline] = useState(false);
   const router = useRouter();
+
+  const verificarConexao = async (): Promise<void> => {
+    const { isOffline } = await storage.getNetworkStatus();
+    setOffline(isOffline);
+  };
 
   const carregarChaves = async (): Promise<void> => {
     try {
+      await verificarConexao();
       const chavesValidadas = await api.listarChaves().then(data => data.map((item: unknown) => ChaveSchema.parse(item)));
       setChaves(chavesValidadas);
     } catch (error) {
       console.error("Erro ao carregar chaves:", error);
-      Alert.alert("Erro", "Não foi possível carregar as chaves.");
+      // Tenta carregar do cache mesmo assim
+      const cached = await storage.buscarChavesCache();
+      if (cached) {
+        setChaves(cached as Chave[]);
+        Alert.alert("Modo Offline", "Exibindo dados em cache. Algumas funcionalidades podem estar limitadas.");
+      } else {
+        Alert.alert("Erro", "Não foi possível carregar as chaves.");
+      }
     } finally {
       setCarregando(false);
     }
@@ -30,6 +45,10 @@ export default function QuadroChavesScreen(): React.ReactNode {
 
   useEffect(() => {
     carregarChaves();
+    
+    // Verifica conexão periodicamente
+    const interval = setInterval(verificarConexao, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const abrirRetirada = (codigo: string): void => {
@@ -101,13 +120,19 @@ export default function QuadroChavesScreen(): React.ReactNode {
   if (carregando) {
     return (
       <View style={styles.center}>
-        <Text>Carregando chaves...</Text>
+        <ActivityIndicator size="large" />
+        <Text style={{ marginTop: 10 }}>Carregando chaves...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {offline && (
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineText}>📴 Modo Offline - Dados em cache</Text>
+        </View>
+      )}
       <FlatList
         data={chaves}
         keyExtractor={(item) => item.codigo}
@@ -122,6 +147,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f3f4f6",
+  },
+  offlineBanner: {
+    backgroundColor: "#fbbf24",
+    padding: 10,
+    alignItems: "center",
+  },
+  offlineText: {
+    color: "#78350f",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   center: {
     flex: 1,
