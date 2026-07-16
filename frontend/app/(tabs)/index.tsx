@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { router } from "expo-router";
 
-export default function IndexRedirect(): null {
+export default function TabsIndexRedirect(): null {
   useEffect(() => {
-    router.replace("/identificacao");
+    router.replace("/(tabs)/quadro");
   }, []);
 
   return null;

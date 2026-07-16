@@ -30,6 +30,12 @@
     "plugins": [
       "expo-router"
     ],
-    "scheme": "coretech-chaves"
+    "scheme": "coretech-chaves",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9f856830-b495-468b-b259-a920f7864e80"
+      }
+    }
   }
 }
