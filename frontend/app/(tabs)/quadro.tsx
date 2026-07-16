@@ -5,24 +5,44 @@ import { ChaveSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.s
 import { api } from "../../src/services/api";
 import { storage } from "../../src/services/storage";
 
+/** Tipo que representa uma chave no sistema */
 type Chave = {
+  /** Código identificador da chave */
   codigo: string;
+  /** Status atual: disponível ou em uso */
   status: "disponivel" | "em_uso";
+  /** Responsável atual pela chave, se estiver em uso */
   responsavelAtual: { nome: string; matricula: string } | null;
+  /** Data/hora da última movimentação registrada */
   ultimaMovimentacaoEm: string | null;
 };
 
+/**
+ * Tela principal que exibe o quadro de chaves.
+ * Permite visualizar, retirar e devolver chaves.
+ * Funciona offline usando dados em cache.
+ * @returns Componente da tela de quadro de chaves
+ */
 export default function QuadroChavesScreen(): React.ReactNode {
+  /** Lista de chaves exibidas na tela */
   const [chaves, setChaves] = useState<Chave[]>([]);
+  /** Indica se os dados estão sendo carregados */
   const [carregando, setCarregando] = useState(true);
+  /** Indica se o aplicativo está offline */
   const [offline, setOffline] = useState(false);
   const router = useRouter();
 
+  /**
+   * Verifica o status atual da conexão de rede.
+   */
   const verificarConexao = async (): Promise<void> => {
     const { isOffline } = await storage.getNetworkStatus();
     setOffline(isOffline);
   };
 
+  /**
+   * Carrega a lista de chaves da API ou do cache.
+   */
   const carregarChaves = async (): Promise<void> => {
     try {
       await verificarConexao();
@@ -46,11 +66,15 @@ export default function QuadroChavesScreen(): React.ReactNode {
   useEffect(() => {
     carregarChaves();
     
-    // Verifica conexão periodicamente
+    // Verifica conexão periodicamente a cada 5 segundos
     const interval = setInterval(verificarConexao, 5000);
     return () => clearInterval(interval);
   }, []);
 
+  /**
+   * Navega para a tela de retirada de uma chave específica.
+   * @param codigo - Código da chave a ser retirada
+   */
   const abrirRetirada = (codigo: string): void => {
     const parsed = CodigoChaveSchema.safeParse(codigo);
     if (!parsed.success) {
@@ -60,6 +84,10 @@ export default function QuadroChavesScreen(): React.ReactNode {
     router.push(`/retirada/${codigo}`);
   };
 
+  /**
+   * Navega para a tela de devolução de uma chave específica.
+   * @param codigo - Código da chave a ser devolvida
+   */
   const abrirDevolucao = (codigo: string): void => {
     const parsed = CodigoChaveSchema.safeParse(codigo);
     if (!parsed.success) {
@@ -69,10 +97,19 @@ export default function QuadroChavesScreen(): React.ReactNode {
     router.push(`/devolucao/${codigo}`);
   };
 
+  /**
+   * Navega para a tela de histórico de uma chave específica.
+   * @param codigo - Código da chave
+   */
   const abrirHistorico = (codigo: string): void => {
     router.push(`/historico/${codigo}`);
   };
 
+  /**
+   * Renderiza um item (chave) na lista.
+   * @param item - Objeto da chave a ser renderizado
+   * @returns Elemento React representando o card da chave
+   */
   const renderChave = ({ item }: { item: Chave }): React.ReactElement => {
     const disponivel = item.status === "disponivel";
     const cardColor = disponivel ? "#dcfce7" : "#fee2e2";
@@ -117,6 +154,7 @@ export default function QuadroChavesScreen(): React.ReactNode {
     );
   };
 
+  // Exibe indicador de carregamento enquanto busca os dados
   if (carregando) {
     return (
       <View style={styles.center}>
@@ -128,6 +166,7 @@ export default function QuadroChavesScreen(): React.ReactNode {
 
   return (
     <View style={styles.container}>
+      {/* Banner exibido quando o aplicativo está offline */}
       {offline && (
         <View style={styles.offlineBanner}>
           <Text style={styles.offlineText}>📴 Modo Offline - Dados em cache</Text>
@@ -143,6 +182,7 @@ export default function QuadroChavesScreen(): React.ReactNode {
   );
 }
 
+/** Estilos da tela de quadro de chaves */
 const styles = StyleSheet.create({
   container: {
     flex: 1,

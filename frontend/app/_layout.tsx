@@ -3,6 +3,11 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 
+/**
+ * Layout principal da aplicação.
+ * Configura a navegação por stack com todas as rotas do aplicativo.
+ * @returns Componente de layout com navegação configurada
+ */
 export default function RootLayout(): ReactElement {
   return (
     <SafeAreaProvider>

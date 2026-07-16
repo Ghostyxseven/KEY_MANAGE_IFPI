@@ -4,16 +4,30 @@ import { useRouter } from "expo-router";
 import { IdentificacaoRequestSchema } from "../src/specs/schemas/identificacao.schema";
 import { api } from "../src/services/api";
 
+/** Tipo que representa o formulário de identificação */
 type IdentificacaoForm = {
+  /** Nome completo do usuário */
   nome: string;
+  /** Matrícula ou identificador do usuário */
   matricula: string;
 };
 
+/**
+ * Tela de identificação do usuário.
+ * Solicita nome e matrícula antes de permitir o acesso ao sistema.
+ * @returns Componente da tela de identificação
+ */
 export default function IdentificacaoScreen(): React.ReactNode {
+  /** Estado do formulário de identificação */
   const [form, setForm] = useState<IdentificacaoForm>({ nome: "", matricula: "" });
+  /** Indica se a requisição está em andamento */
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  /**
+   * Processa o formulário de identificação.
+   * Valida os dados e envia para a API.
+   */
   const handleIdentificacao = async (): Promise<void> => {
     const parsed = IdentificacaoRequestSchema.safeParse(form);
 
@@ -53,6 +67,7 @@ export default function IdentificacaoScreen(): React.ReactNode {
   );
 }
 
+/** Estilos da tela de identificação */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
