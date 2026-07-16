@@ -1,6 +1,7 @@
 {
   "name": "coretech-chaves",
   "version": "1.0.0",
+  "type": "module",
   "description": "Sistema de Gerenciamento de Acesso a Chaves — IFPI Campus Piripiri (CoreTech)",
   "main": "dist/index.js",
   "scripts": {
