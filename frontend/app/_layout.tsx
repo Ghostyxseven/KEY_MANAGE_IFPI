@@ -11,21 +11,24 @@ import SplashScreen from "../src/presentation/components/SplashScreen";
  * @returns Componente de layout com navegação configurada
  */
 function RotasProtegidas(): React.ReactElement {
-  const { autenticado, carregandoSessao } = useApp();
+  const { autenticado, carregandoSessao, perfil } = useApp();
   const segments = useSegments();
   const emIdentificacao = segments[0] === "identificacao";
+  const emAdmin = segments[0] === "admin";
 
   useEffect(() => {
     if (carregandoSessao) return;
-    if (!autenticado && !emIdentificacao) router.replace("/identificacao");
-    if (autenticado && emIdentificacao) router.replace("/(tabs)/quadro");
-  }, [autenticado, carregandoSessao, emIdentificacao]);
+    if (!autenticado && !emIdentificacao && !emAdmin) router.replace("/identificacao");
+    if (autenticado && perfil === "guarda" && (emIdentificacao || emAdmin)) router.replace("/(tabs)/quadro");
+    if (autenticado && perfil === "admin" && !emAdmin) router.replace("/admin");
+  }, [autenticado, carregandoSessao, emAdmin, emIdentificacao, perfil]);
 
   if (carregandoSessao) return <SplashScreen />;
 
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="admin" options={{ title: "Administração" }} />
       <Stack.Screen name="identificacao" options={{ title: "Identificação" }} />
       <Stack.Screen name="retirada/[codigo]" options={{ title: "Retirada" }} />
       <Stack.Screen name="devolucao/[codigo]" options={{ title: "Devolução" }} />

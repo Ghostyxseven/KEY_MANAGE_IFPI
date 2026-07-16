@@ -16,11 +16,9 @@ import {
   type QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { ChaveSchema, MovimentacaoSchema } from "../specs/schemas/chaves.schema";
-import { IdentificacaoRequestSchema } from "../specs/schemas/identificacao.schema";
-import { ensureAnonymousAuth, firebaseServices } from "./firebase";
+import { firebaseServices } from "./firebase";
+import { perfilAtual } from "./auth";
 import { storage } from "./storage";
-
-export type IdentificacaoPayload = { nome: string; matricula: string };
 
 export type MovimentacaoPayload = {
   responsavel: { nome: string; matricula: string };
@@ -111,8 +109,9 @@ function falhaDeRede(error: unknown): boolean {
 }
 
 async function bancoAutenticado(): Promise<{ db: Firestore; uid: string }> {
-  const uid = await ensureAnonymousAuth();
-  return { db: firebaseServices().db, uid };
+  const perfil = await perfilAtual();
+  if (!perfil?.ativo) throw criarErro("SESSAO_INVALIDA", "Sessão inválida.", 401);
+  return { db: firebaseServices().db, uid: perfil.uid };
 }
 
 async function resolverChave(db: Firestore, codigo: string): Promise<DocumentReference<DocumentData>> {
@@ -168,6 +167,9 @@ async function executarMovimentacao(
   aceitarConflito = false,
 ): Promise<ResultadoAplicacao> {
   const { db, uid } = await bancoAutenticado();
+  const perfil = await perfilAtual();
+  if (!perfil || perfil.perfil !== "guarda") throw criarErro("SESSAO_INVALIDA", "Sessão de guarda inválida.", 401);
+  const payloadCanonico: MovimentacaoPayload = { ...payload, responsavel: { nome: perfil.nome, matricula: perfil.matricula } };
   const chaveRef = await resolverChave(db, codigo);
   const movimentacaoRef = doc(db, "movimentacoes", id);
 
@@ -183,7 +185,7 @@ async function executarMovimentacao(
       return { status: "sincronizado", chave, movimentacao: mapearMovimentacao(movimentoSnapshot) };
     }
 
-    const conflito = motivoConflito(chave, tipo, payload.timestampLocal);
+    const conflito = motivoConflito(chave, tipo, payloadCanonico.timestampLocal);
     if (conflito) {
       if (!aceitarConflito) {
         throw criarErro(tipo === "retirada" ? "CHAVE_JA_EM_USO" : "CHAVE_JA_DISPONIVEL", conflito);
@@ -191,22 +193,22 @@ async function executarMovimentacao(
       return {
         status: "conflito",
         chave,
-        movimentacao: { id, chaveCodigo: codigo, tipo, ...payload, syncStatus: "erro" },
+        movimentacao: { id, chaveCodigo: codigo, tipo, ...payloadCanonico, syncStatus: "erro" },
       };
     }
 
-    const timestamp = Timestamp.fromDate(new Date(payload.timestampLocal));
+    const timestamp = Timestamp.fromDate(new Date(payloadCanonico.timestampLocal));
     const chaveAtualizada: Chave = {
       codigo,
       status: tipo === "retirada" ? "em_uso" : "disponivel",
-      responsavelAtual: tipo === "retirada" ? payload.responsavel : null,
-      ultimaMovimentacaoEm: payload.timestampLocal,
+      responsavelAtual: tipo === "retirada" ? payloadCanonico.responsavel : null,
+      ultimaMovimentacaoEm: payloadCanonico.timestampLocal,
     };
     const movimentacao: Movimentacao = {
       id,
       chaveCodigo: codigo,
       tipo,
-      ...payload,
+      ...payloadCanonico,
       syncStatus: "sincronizado",
     };
 
@@ -236,11 +238,6 @@ async function movimentacoesRemotas(codigo?: string): Promise<Movimentacao[]> {
 let sincronizando = false;
 
 export const api = {
-  async identificar(payload: IdentificacaoPayload): Promise<IdentificacaoPayload> {
-    const identificacao = IdentificacaoRequestSchema.parse(payload);
-    await bancoAutenticado();
-    return identificacao;
-  },
   async listarChaves(): Promise<Chave[]> {
     try {
       const { db } = await bancoAutenticado();

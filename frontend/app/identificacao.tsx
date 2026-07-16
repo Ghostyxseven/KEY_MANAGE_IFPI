@@ -1,27 +1,25 @@
 import { useState } from "react";
-import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Button, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useApp } from "../src/context/AppContext";
-import { api } from "../src/services/api";
 import { IdentificacaoRequestSchema } from "../src/specs/schemas/identificacao.schema";
 
 export default function IdentificacaoScreen(): React.ReactElement {
-  const [form, setForm] = useState({ nome: "", matricula: "" });
+  const [form, setForm] = useState({ matricula: "", pin: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { entrar: salvarSessao } = useApp();
+  const { entrarComoGuarda } = useApp();
 
   const entrar = async (): Promise<void> => {
     const parsed = IdentificacaoRequestSchema.safeParse(form);
     if (!parsed.success) {
-      Alert.alert("Validação", "Informe nome e matrícula.");
+      Alert.alert("Validação", "Informe a matrícula e um PIN de 6 dígitos.");
       return;
     }
 
     setLoading(true);
     try {
-      const identificacao = await api.identificar(parsed.data);
-      await salvarSessao(identificacao.nome, identificacao.matricula);
+      await entrarComoGuarda(parsed.data.matricula, parsed.data.pin);
       router.replace("/(tabs)/quadro");
     } catch (error) {
       Alert.alert("Erro", error instanceof Error ? error.message : "Não foi possível entrar.");
@@ -36,20 +34,23 @@ export default function IdentificacaoScreen(): React.ReactElement {
       <Text style={styles.subtitle}>Informe seu nome e matrícula para registrar as operações.</Text>
       <TextInput
         style={styles.input}
-        placeholder="Nome completo"
-        value={form.nome}
-        onChangeText={(nome) => setForm({ ...form, nome })}
-        autoCapitalize="words"
-      />
-      <TextInput
-        style={styles.input}
         placeholder="Matrícula"
         value={form.matricula}
         onChangeText={(matricula) => setForm({ ...form, matricula })}
         autoCapitalize="none"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="PIN de 6 dígitos"
+        value={form.pin}
+        onChangeText={(pin) => setForm({ ...form, pin: pin.replace(/\D/g, "") })}
+        keyboardType="number-pad"
+        secureTextEntry
+        maxLength={6}
         onSubmitEditing={() => void entrar()}
       />
       <Button title={loading ? "Entrando..." : "Entrar"} onPress={() => void entrar()} disabled={loading} />
+      <Pressable onPress={() => router.push("/admin")}><Text style={styles.link}>Acesso administrativo</Text></Pressable>
     </View>
   );
 }
@@ -59,4 +60,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "700", textAlign: "center" },
   subtitle: { textAlign: "center", color: "#475569" },
   input: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 8, padding: 12, fontSize: 16 },
+  link: { color: "#2563eb", textAlign: "center", padding: 8, fontWeight: "600" },
 });
