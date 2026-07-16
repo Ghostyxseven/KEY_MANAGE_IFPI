@@ -57,7 +57,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    await handleResponse<void>(response);
+    await handleResponse(response);
   },
 
   async listarChaves(): Promise<Chave[]> {
