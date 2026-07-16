@@ -57,16 +57,13 @@ export default function QuadroChavesScreen(): React.ReactNode {
   const renderChave = ({ item }: { item: Chave }): React.ReactElement => {
     const disponivel = item.status === "disponivel";
     const cardColor = disponivel ? "#dcfce7" : "#fee2e2";
-    const borderColor = disponivel ? "#16a34a" : "#dc2626";
-    const statusText = disponivel ? "Disponível" : "Em uso";
-    const statusColor = disponivel ? "#16a34a" : "#dc2626";
 
     return (
-      <View style={[styles.card, { backgroundColor: cardColor, borderLeftColor }]}>
+      <View style={[styles.card, { backgroundColor: cardColor, borderLeftColor: disponivel ? "#16a34a" : "#dc2626" }]}>
         <View style={styles.header}>
           <Text style={[styles.codigo, { color: "#111827" }]}>{item.codigo}</Text>
           <View style={[styles.badge, { backgroundColor: disponivel ? "#16a34a" : "#dc2626" }]}>
-            <Text style={styles.badgeText}>{statusText}</Text>
+            <Text style={styles.badgeText}>{disponivel ? "Disponível" : "Em uso"}</Text>
           </View>
         </View>
 
