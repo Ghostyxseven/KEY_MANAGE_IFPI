@@ -26,6 +26,7 @@ export default function HistoricoScreen(): React.ReactNode {
       setMovimentacoes(movimentacoesValidadas);
     } catch (error) {
       console.error("Erro ao carregar histórico:", error);
+      Alert.alert("Histórico", "Não foi possível carregar o histórico no momento.");
     } finally {
       setCarregando(false);
     }

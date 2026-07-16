@@ -41,6 +41,16 @@ export class ChavesController {
   ): Promise<void> => {
     try {
       const codigo = CodigoChaveSchema.parse(req.params.codigo);
+      const chave = await this.chavesService.buscarChave(codigo);
+
+      if (!chave) {
+        res.status(404).json({
+          codigo: "CHAVE_NAO_ENCONTRADA",
+          mensagem: `Chave ${codigo} nao cadastrada no padrao do campus (RN04).`,
+        });
+        return;
+      }
+
       const historico = await this.chavesService.buscarHistorico(codigo);
       res.status(200).json(historico);
     } catch (error) {
