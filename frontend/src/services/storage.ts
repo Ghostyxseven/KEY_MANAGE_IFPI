@@ -1,119 +1,186 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Network from 'expo-network';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Network from "expo-network";
 
-/** Chave usada para armazenar o cache das chaves no AsyncStorage */
-const CHAVES_CACHE_KEY = '@coretech:chaves_cache';
-/** Chave usada para armazenar movimentações pendentes de sincronização */
-const MOVIMENTACOES_PENDING_KEY = '@coretech:movimentacoes_pending';
+const CHAVES_CACHE_KEY = "@coretech:chaves_cache";
+const HISTORICO_CACHE_KEY = "@coretech:historico_cache";
+const MOVIMENTACOES_PENDING_KEY = "@coretech:movimentacoes_pending";
+const DEVICE_ID_KEY = "@coretech:device_id";
 
-/**
- * Tipo que representa uma movimentação pendente de sincronização.
- * Usada quando o aplicativo está offline e precisa salvar operações para depois.
- */
 export type MovimentacaoPending = {
-  /** Código identificador da chave */
+  id: string;
   chaveCodigo: string;
-  /** Tipo da operação: retirada ou devolução */
-  tipo: 'retirada' | 'devolucao';
-  /** Dados da movimentação a serem enviados ao servidor */
+  tipo: "retirada" | "devolucao";
   payload: {
-    /** Nome e matrícula do responsável pela operação */
     responsavel: { nome: string; matricula: string };
-    /** Data/hora local da operação em formato ISO */
     timestampLocal: string;
-    /** Identificador único do dispositivo que realizou a operação */
     deviceId: string;
   };
+  error?: string;
 };
 
-/**
- * Serviço de armazenamento local e gerenciamento de conexão de rede.
- * Responsável por cachear dados e gerenciar operações offline.
- */
+type ChaveCache = {
+  codigo: string;
+  status: "disponivel" | "em_uso";
+  responsavelAtual: { nome: string; matricula: string } | null;
+  ultimaMovimentacaoEm: string | null;
+};
+
+let filaDeEscrita: Promise<void> = Promise.resolve();
+
+function serializarEscrita(operacao: () => Promise<void>): Promise<void> {
+  const proxima = filaDeEscrita.then(operacao, operacao);
+  filaDeEscrita = proxima.catch(() => undefined);
+  return proxima;
+}
+
+function criarId(prefixo: string): string {
+  return `${prefixo}-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function criarUuid(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (caractere): string => {
+    const aleatorio = Math.floor(Math.random() * 16);
+    const valor = caractere === "x" ? aleatorio : (aleatorio & 0x3) | 0x8;
+    return valor.toString(16);
+  });
+}
+
+function idMovimentacaoValido(id: string | undefined): id is string {
+  return typeof id === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+}
+
+function normalizarPendencia(item: Partial<MovimentacaoPending>): MovimentacaoPending | null {
+  if (!item.chaveCodigo || !item.tipo || !item.payload) return null;
+  return {
+    id: idMovimentacaoValido(item.id) ? item.id : criarUuid(),
+    chaveCodigo: item.chaveCodigo,
+    tipo: item.tipo,
+    payload: item.payload,
+    error: item.error,
+  };
+}
+
 export const storage = {
-  /**
-   * Verifica o status atual da conexão de rede.
-   * @returns Objeto com status de conexão (isConnected) e modo offline (isOffline)
-   */
   async getNetworkStatus(): Promise<{ isConnected: boolean; isOffline: boolean }> {
-    const networkState = await Network.getNetworkStateAsync();
-    const isConnected = networkState.isConnected ?? false;
+    const estado = await Network.getNetworkStateAsync();
+    const isConnected = (estado.isConnected ?? false) && estado.isInternetReachable !== false;
     return { isConnected, isOffline: !isConnected };
   },
 
-  /**
-   * Salva a lista de chaves no cache local.
-   * @param chaves - Array de objetos de chaves a serem cacheados
-   */
-  async salvarChavesCache(chaves: unknown[]): Promise<void> {
-    try {
-      await AsyncStorage.setItem(CHAVES_CACHE_KEY, JSON.stringify(chaves));
-    } catch (error) {
-      console.error('Erro ao salvar cache de chaves:', error);
-    }
+  async getDeviceId(): Promise<string> {
+    const existente = await AsyncStorage.getItem(DEVICE_ID_KEY);
+    if (existente) return existente;
+    const criado = criarId("device");
+    await serializarEscrita(async () => {
+      const atual = await AsyncStorage.getItem(DEVICE_ID_KEY);
+      if (!atual) await AsyncStorage.setItem(DEVICE_ID_KEY, criado);
+    });
+    return (await AsyncStorage.getItem(DEVICE_ID_KEY)) ?? criado;
   },
 
-  /**
-   * Recupera a lista de chaves armazenada em cache.
-   * @returns Array de chaves cacheadas ou null se não existir cache
-   */
+  async salvarChavesCache(chaves: ChaveCache[]): Promise<void> {
+    await AsyncStorage.setItem(CHAVES_CACHE_KEY, JSON.stringify(chaves));
+  },
+
   async buscarChavesCache(): Promise<unknown[] | null> {
+    const data = await AsyncStorage.getItem(CHAVES_CACHE_KEY);
+    if (!data) return null;
     try {
-      const data = await AsyncStorage.getItem(CHAVES_CACHE_KEY);
-      return data ? JSON.parse(data) : null;
-    } catch (error) {
-      console.error('Erro ao buscar cache de chaves:', error);
+      const parsed: unknown = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
       return null;
     }
   },
 
-  /**
-   * Adiciona uma movimentação à fila de pendências para sincronização futura.
-   * @param movimentacao - Objeto da movimentação pendente
-   */
-  async adicionarMovimentacaoPendente(movimentacao: MovimentacaoPending): Promise<void> {
+  async atualizarChaveCache(chave: ChaveCache): Promise<void> {
+    await serializarEscrita(async () => {
+      const atuais = await this.buscarChavesCache();
+      if (!atuais) return;
+      const atualizadas = atuais.map((item) => {
+        if (typeof item !== "object" || item === null || !("codigo" in item)) return item;
+        return item.codigo === chave.codigo ? chave : item;
+      });
+      await AsyncStorage.setItem(CHAVES_CACHE_KEY, JSON.stringify(atualizadas));
+    });
+  },
+
+  async salvarHistoricoCache(codigo: string, historico: unknown[]): Promise<void> {
+    await serializarEscrita(async () => {
+      const data = await AsyncStorage.getItem(HISTORICO_CACHE_KEY);
+      let cache: Record<string, unknown[]> = {};
+      try {
+        cache = data ? (JSON.parse(data) as Record<string, unknown[]>) : {};
+      } catch {
+        cache = {};
+      }
+      cache[codigo] = historico;
+      await AsyncStorage.setItem(HISTORICO_CACHE_KEY, JSON.stringify(cache));
+    });
+  },
+
+  async buscarHistoricoCache(codigo: string): Promise<unknown[] | null> {
+    const data = await AsyncStorage.getItem(HISTORICO_CACHE_KEY);
+    if (!data) return null;
     try {
-      const pendentes = await this.buscarMovimentacoesPendentes();
-      pendentes.push(movimentacao);
-      await AsyncStorage.setItem(MOVIMENTACOES_PENDING_KEY, JSON.stringify(pendentes));
-    } catch (error) {
-      console.error('Erro ao adicionar movimentação pendente:', error);
+      const cache = JSON.parse(data) as Record<string, unknown[]>;
+      return Array.isArray(cache[codigo]) ? cache[codigo] : null;
+    } catch {
+      return null;
     }
   },
 
-  /**
-   * Recupera todas as movimentações pendentes de sincronização.
-   * @returns Array de movimentações pendentes
-   */
+  async adicionarMovimentacaoPendente(
+    movimentacao: Omit<MovimentacaoPending, "id"> & { id?: string },
+  ): Promise<MovimentacaoPending> {
+    const pendencia: MovimentacaoPending = {
+      ...movimentacao,
+      id: idMovimentacaoValido(movimentacao.id) ? movimentacao.id : criarUuid(),
+    };
+    await serializarEscrita(async () => {
+      const pendentes = await this.buscarMovimentacoesPendentes();
+      pendentes.push(pendencia);
+      await AsyncStorage.setItem(MOVIMENTACOES_PENDING_KEY, JSON.stringify(pendentes));
+    });
+    return pendencia;
+  },
+
   async buscarMovimentacoesPendentes(): Promise<MovimentacaoPending[]> {
+    const data = await AsyncStorage.getItem(MOVIMENTACOES_PENDING_KEY);
+    if (!data) return [];
     try {
-      const data = await AsyncStorage.getItem(MOVIMENTACOES_PENDING_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      console.error('Erro ao buscar movimentações pendentes:', error);
+      const parsed: unknown = JSON.parse(data);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map((item) => normalizarPendencia(item as Partial<MovimentacaoPending>))
+        .filter((item): item is MovimentacaoPending => item !== null);
+    } catch {
       return [];
     }
   },
 
-  /**
-   * Limpa todas as movimentações pendentes após sincronização bem-sucedida.
-   */
-  async limparMovimentacoesPendentes(): Promise<void> {
-    try {
-      await AsyncStorage.removeItem(MOVIMENTACOES_PENDING_KEY);
-    } catch (error) {
-      console.error('Erro ao limpar movimentações pendentes:', error);
-    }
+  async removerMovimentacoesPendentes(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await serializarEscrita(async () => {
+      const pendentes = await this.buscarMovimentacoesPendentes();
+      const idsRemovidos = new Set(ids);
+      const restantes = pendentes.filter((item) => !idsRemovidos.has(item.id));
+      await AsyncStorage.setItem(MOVIMENTACOES_PENDING_KEY, JSON.stringify(restantes));
+    });
   },
 
-  /**
-   * Limpa todo o cache armazenado localmente (chaves e pendências).
-   */
+  async marcarMovimentacaoComErro(id: string, error: string): Promise<void> {
+    await serializarEscrita(async () => {
+      const pendentes = await this.buscarMovimentacoesPendentes();
+      const atualizados = pendentes.map(item => 
+        item.id === id ? { ...item, error } : item
+      );
+      await AsyncStorage.setItem(MOVIMENTACOES_PENDING_KEY, JSON.stringify(atualizados));
+    });
+  },
+
   async limparCache(): Promise<void> {
-    try {
-      await AsyncStorage.multiRemove([CHAVES_CACHE_KEY, MOVIMENTACOES_PENDING_KEY]);
-    } catch (error) {
-      console.error('Erro ao limpar cache:', error);
-    }
+    await AsyncStorage.multiRemove([CHAVES_CACHE_KEY, HISTORICO_CACHE_KEY, MOVIMENTACOES_PENDING_KEY]);
   },
 };

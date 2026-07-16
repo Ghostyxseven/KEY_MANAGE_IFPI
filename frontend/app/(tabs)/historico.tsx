@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { MovimentacaoSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
+import { CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
 import { api } from "../../src/services/api";
 
 type Movimentacao = {
@@ -21,7 +21,7 @@ export default function HistoricoScreen(): React.ReactNode {
 
   const carregarHistorico = async (): Promise<void> => {
     try {
-      const data = await api.buscarHistorico("A/S9");
+      const data = await api.listarHistorico();
       setMovimentacoes(data);
     } catch (error) {
       console.error("Erro ao carregar histórico:", error);
@@ -69,6 +69,9 @@ export default function HistoricoScreen(): React.ReactNode {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
+        refreshing={carregando}
+        onRefresh={() => void carregarHistorico()}
+        ListEmptyComponent={<Text style={styles.empty}>Nenhuma movimentação registrada.</Text>}
       />
     </View>
   );
@@ -111,4 +114,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6b7280",
   },
+  empty: { textAlign: "center", color: "#6b7280", marginTop: 32 },
 });

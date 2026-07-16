@@ -14,7 +14,15 @@ export const sessionStorage = {
 
   async ler(): Promise<Sessao | null> {
     const data = await AsyncStorage.getItem(SESSION_KEY);
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    try {
+      const sessao = JSON.parse(data) as Partial<Sessao>;
+      return typeof sessao.nome === "string" && typeof sessao.matricula === "string"
+        ? { nome: sessao.nome, matricula: sessao.matricula }
+        : null;
+    } catch {
+      return null;
+    }
   },
 
   async limpar(): Promise<void> {

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { ChaveSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
 import { api } from "../../src/services/api";
 import { storage } from "../../src/services/storage";
@@ -30,22 +30,23 @@ export default function QuadroChavesScreen(): React.ReactNode {
   const [carregando, setCarregando] = useState(true);
   /** Indica se o aplicativo está offline */
   const [offline, setOffline] = useState(false);
+  const [pendentes, setPendentes] = useState(0);
   const router = useRouter();
-
-  /**
-   * Verifica o status atual da conexão de rede.
-   */
-  const verificarConexao = async (): Promise<void> => {
-    const { isOffline } = await storage.getNetworkStatus();
-    setOffline(isOffline);
-  };
 
   /**
    * Carrega a lista de chaves da API ou do cache.
    */
-  const carregarChaves = async (): Promise<void> => {
+  const carregarChaves = useCallback(async (): Promise<void> => {
     try {
-      await verificarConexao();
+      const { isOffline, isConnected } = await storage.getNetworkStatus();
+      setOffline(isOffline);
+      if (isConnected) {
+        const resultado = await api.sincronizarPendencias();
+        if (resultado.conflitos > 0) {
+          Alert.alert("Conflito de sincronização", `${resultado.conflitos} operação(ões) foram substituídas por registros mais recentes.`);
+        }
+      }
+      setPendentes((await storage.buscarMovimentacoesPendentes()).length);
       const chavesValidadas = await api.listarChaves().then(data => data.map((item: unknown) => ChaveSchema.parse(item)));
       setChaves(chavesValidadas);
     } catch (error) {
@@ -61,15 +62,16 @@ export default function QuadroChavesScreen(): React.ReactNode {
     } finally {
       setCarregando(false);
     }
-  };
+  }, []);
+
+  useFocusEffect(useCallback((): void => {
+    void carregarChaves();
+  }, [carregarChaves]));
 
   useEffect(() => {
-    carregarChaves();
-    
-    // Verifica conexão periodicamente a cada 5 segundos
-    const interval = setInterval(verificarConexao, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    const interval = setInterval(() => void carregarChaves(), 15000);
+    return (): void => clearInterval(interval);
+  }, [carregarChaves]);
 
   /**
    * Navega para a tela de retirada de uma chave específica.
@@ -134,6 +136,9 @@ export default function QuadroChavesScreen(): React.ReactNode {
             style={[styles.button, disponivel ? styles.primaryButton : styles.disabledButton]}
             onPress={() => abrirRetirada(item.codigo)}
             disabled={!disponivel}
+            accessibilityRole="button"
+            accessibilityLabel={`Retirar chave ${item.codigo}`}
+            accessibilityState={{ disabled: !disponivel }}
           >
             <Text style={[styles.buttonText, disponivel && styles.primaryButtonText]}>Retirar</Text>
           </TouchableOpacity>
@@ -142,11 +147,14 @@ export default function QuadroChavesScreen(): React.ReactNode {
             style={[styles.button, !disponivel ? styles.secondaryButton : styles.disabledButton]}
             onPress={() => abrirDevolucao(item.codigo)}
             disabled={disponivel}
+            accessibilityRole="button"
+            accessibilityLabel={`Devolver chave ${item.codigo}`}
+            accessibilityState={{ disabled: disponivel }}
           >
             <Text style={[styles.buttonText, !disponivel && styles.secondaryButtonText]}>Devolver</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.button, styles.ghostButton]} onPress={() => abrirHistorico(item.codigo)}>
+          <TouchableOpacity style={[styles.button, styles.ghostButton]} onPress={() => abrirHistorico(item.codigo)} accessibilityRole="button" accessibilityLabel={`Ver histórico da chave ${item.codigo}`}>
             <Text style={styles.ghostButtonText}>Histórico</Text>
           </TouchableOpacity>
         </View>
@@ -167,9 +175,11 @@ export default function QuadroChavesScreen(): React.ReactNode {
   return (
     <View style={styles.container}>
       {/* Banner exibido quando o aplicativo está offline */}
-      {offline && (
+      {(offline || pendentes > 0) && (
         <View style={styles.offlineBanner}>
-          <Text style={styles.offlineText}>📴 Modo Offline - Dados em cache</Text>
+          <Text style={styles.offlineText}>
+            {offline ? "📴 Modo offline" : "🔄 Sincronização pendente"} — {pendentes} registro(s)
+          </Text>
         </View>
       )}
       <FlatList
@@ -177,6 +187,9 @@ export default function QuadroChavesScreen(): React.ReactNode {
         keyExtractor={(item) => item.codigo}
         renderItem={renderChave}
         contentContainerStyle={styles.list}
+        refreshing={carregando}
+        onRefresh={() => void carregarChaves()}
+        ListEmptyComponent={<Text style={styles.empty}>Nenhuma chave cadastrada.</Text>}
       />
     </View>
   );
@@ -207,6 +220,7 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  empty: { textAlign: "center", color: "#6b7280", marginTop: 32 },
   card: {
     borderRadius: 12,
     padding: 16,

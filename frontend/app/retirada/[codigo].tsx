@@ -1,26 +1,26 @@
 import { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { View, Text, Button, StyleSheet, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { RegistroMovimentacaoRequestSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
 import { api } from "../../src/services/api";
-
-type FormData = {
-  responsavelNome: string;
-  responsavelMatricula: string;
-};
+import { storage } from "../../src/services/storage";
+import { useApp } from "../../src/context/AppContext";
 
 export default function RetiradaScreen(): React.ReactNode {
   const params = useLocalSearchParams<{ codigo: string }>();
-  const codigo = CodigoChaveSchema.parse(params.codigo);
-  const [form, setForm] = useState<FormData>({ responsavelNome: "", responsavelMatricula: "" });
+  const codigoValidado = CodigoChaveSchema.safeParse(params.codigo);
+  const codigo = codigoValidado.success ? codigoValidado.data : null;
+  const { nomeGuarda, matriculaGuarda } = useApp();
   const [enviando, setEnviando] = useState(false);
   const router = useRouter();
 
   const handleRetirada = async (): Promise<void> => {
+    if (!codigo) return;
+    const deviceId = await storage.getDeviceId();
     const parsed = RegistroMovimentacaoRequestSchema.safeParse({
-      responsavel: { nome: form.responsavelNome, matricula: form.responsavelMatricula },
+      responsavel: { nome: nomeGuarda, matricula: matriculaGuarda },
       timestampLocal: new Date().toISOString(),
-      deviceId: "expo-device",
+      deviceId,
     });
 
     if (!parsed.success) {
@@ -45,21 +45,14 @@ export default function RetiradaScreen(): React.ReactNode {
     }
   };
 
+  if (!codigo) {
+    return <View style={styles.container}><Text style={styles.title}>Código de chave inválido.</Text><Button title="Voltar" onPress={() => router.back()} /></View>;
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Retirada — {codigo}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nome do responsável"
-        value={form.responsavelNome}
-        onChangeText={(text) => setForm({ ...form, responsavelNome: text })}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Matrícula do responsável"
-        value={form.responsavelMatricula}
-        onChangeText={(text) => setForm({ ...form, responsavelMatricula: text })}
-      />
+      <View style={styles.operador}><Text style={styles.operadorLabel}>Operador autenticado</Text><Text>{nomeGuarda}</Text><Text>Matrícula: {matriculaGuarda}</Text></View>
       <Button title={enviando ? "Registrando..." : "Registrar retirada"} onPress={handleRetirada} disabled={enviando} />
     </View>
   );
@@ -76,11 +69,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
+  operador: { backgroundColor: "#eff6ff", borderRadius: 8, padding: 12, gap: 3 },
+  operadorLabel: { color: "#1d4ed8", fontWeight: "700" },
 });

@@ -1,47 +1,30 @@
 import { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
-import { IdentificacaoRequestSchema } from "../src/specs/schemas/identificacao.schema";
+import { useApp } from "../src/context/AppContext";
 import { api } from "../src/services/api";
+import { IdentificacaoRequestSchema } from "../src/specs/schemas/identificacao.schema";
 
-/** Tipo que representa o formulário de identificação */
-type IdentificacaoForm = {
-  /** Nome completo do usuário */
-  nome: string;
-  /** Matrícula ou identificador do usuário */
-  matricula: string;
-};
-
-/**
- * Tela de identificação do usuário.
- * Solicita nome e matrícula antes de permitir o acesso ao sistema.
- * @returns Componente da tela de identificação
- */
-export default function IdentificacaoScreen(): React.ReactNode {
-  /** Estado do formulário de identificação */
-  const [form, setForm] = useState<IdentificacaoForm>({ nome: "", matricula: "" });
-  /** Indica se a requisição está em andamento */
+export default function IdentificacaoScreen(): React.ReactElement {
+  const [form, setForm] = useState({ nome: "", matricula: "" });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { entrar: salvarSessao } = useApp();
 
-  /**
-   * Processa o formulário de identificação.
-   * Valida os dados e envia para a API.
-   */
-  const handleIdentificacao = async (): Promise<void> => {
+  const entrar = async (): Promise<void> => {
     const parsed = IdentificacaoRequestSchema.safeParse(form);
-
     if (!parsed.success) {
-      Alert.alert("Validação", "Preencha nome e matrícula.");
+      Alert.alert("Validação", "Informe nome e matrícula.");
       return;
     }
 
     setLoading(true);
     try {
-      await api.identificar(parsed.data);
+      const identificacao = await api.identificar(parsed.data);
+      await salvarSessao(identificacao.nome, identificacao.matricula);
       router.replace("/(tabs)/quadro");
     } catch (error) {
-      Alert.alert("Erro", error instanceof Error ? error.message : "Não foi possível realizar a identificação. Tente novamente.");
+      Alert.alert("Erro", error instanceof Error ? error.message : "Não foi possível entrar.");
     } finally {
       setLoading(false);
     }
@@ -49,43 +32,31 @@ export default function IdentificacaoScreen(): React.ReactNode {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Identificação do Guarda</Text>
+      <Text style={styles.title}>Identificação do guarda</Text>
+      <Text style={styles.subtitle}>Informe seu nome e matrícula para registrar as operações.</Text>
       <TextInput
         style={styles.input}
-        placeholder="Nome"
+        placeholder="Nome completo"
         value={form.nome}
-        onChangeText={(text) => setForm({ ...form, nome: text })}
+        onChangeText={(nome) => setForm({ ...form, nome })}
+        autoCapitalize="words"
       />
       <TextInput
         style={styles.input}
         placeholder="Matrícula"
         value={form.matricula}
-        onChangeText={(text) => setForm({ ...form, matricula: text })}
+        onChangeText={(matricula) => setForm({ ...form, matricula })}
+        autoCapitalize="none"
+        onSubmitEditing={() => void entrar()}
       />
-      <Button title={loading ? "Entrando..." : "Entrar"} onPress={handleIdentificacao} disabled={loading} />
+      <Button title={loading ? "Entrando..." : "Entrar"} onPress={() => void entrar()} disabled={loading} />
     </View>
   );
 }
 
-/** Estilos da tela de identificação */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    gap: 16,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
+  container: { flex: 1, justifyContent: "center", padding: 24, gap: 16, backgroundColor: "#fff" },
+  title: { fontSize: 24, fontWeight: "700", textAlign: "center" },
+  subtitle: { textAlign: "center", color: "#475569" },
+  input: { borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 8, padding: 12, fontSize: 16 },
 });

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { View, Text, FlatList, StyleSheet, Button } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { MovimentacaoSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
 import { api } from "../../src/services/api";
 
@@ -16,17 +16,26 @@ type Movimentacao = {
 
 export default function HistoricoDetalheScreen(): React.ReactNode {
   const params = useLocalSearchParams<{ codigo: string }>();
-  const codigo = CodigoChaveSchema.parse(params.codigo);
+  const codigoValidado = CodigoChaveSchema.safeParse(params.codigo);
+  const codigo = codigoValidado.success ? codigoValidado.data : null;
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const router = useRouter();
 
   const carregarHistorico = async (): Promise<void> => {
+    if (!codigo) {
+      setErro("Código de chave inválido.");
+      setCarregando(false);
+      return;
+    }
+    setErro("");
     try {
       const data = await api.buscarHistorico(codigo);
       const movimentacoesValidadas = data.map((item: unknown) => MovimentacaoSchema.parse(item));
       setMovimentacoes(movimentacoesValidadas);
     } catch {
-      // fallback silencioso para manter funcionamento offline
+      setErro("Não foi possível carregar o histórico.");
     } finally {
       setCarregando(false);
     }
@@ -54,6 +63,10 @@ export default function HistoricoDetalheScreen(): React.ReactNode {
     );
   }
 
+  if (erro) {
+    return <View style={styles.center}><Text>{erro}</Text><Button title="Tentar novamente" onPress={() => void carregarHistorico()} /><Button title="Voltar" onPress={() => router.back()} /></View>;
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -61,6 +74,7 @@ export default function HistoricoDetalheScreen(): React.ReactNode {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={<Text style={styles.empty}>Nenhuma movimentação registrada.</Text>}
       />
     </View>
   );
@@ -99,4 +113,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6b7280",
   },
+  empty: { textAlign: "center", color: "#6b7280", marginTop: 32 },
 });
