@@ -136,7 +136,7 @@ npm run dev
    - `FIREBASE_PRIVATE_KEY` = sua private key do Firebase (não comite este valor)
 6. Clique em **Apply** e aguarde o deploy
 
-A API em produção ficará disponível em `https://coretech-chaves-api.onrender.com/v1`.
+A API em produção ficará disponível em `https://coretech-chaves-api-hj3k.onrender.com/v1`.
 
 ### Frontend — App Expo (mobile)
 
