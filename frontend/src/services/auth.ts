@@ -147,3 +147,53 @@ export async function alterarStatusGuarda(guarda: Usuario, ativo: boolean): Prom
   await batch.commit();
   return { ...guarda, ativo };
 }
+
+export async function apagarGuarda(guarda: Usuario): Promise<void> {
+  const { db } = firebaseServices();
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "usuarios", guarda.uid));
+  batch.delete(doc(db, "acessos", guarda.matricula));
+  await batch.commit();
+}
+
+export async function editarGuarda(guarda: Usuario, novoNome: string, novaMatricula: string): Promise<Usuario> {
+  const nomeLimpo = novoNome.trim();
+  const matriculaNormalizada = normalizarMatricula(novaMatricula);
+  
+  if (nomeLimpo.length < 2 || !matriculaNormalizada) {
+    throw new Error("Informe nome e matrícula válidos.");
+  }
+
+  const { db } = firebaseServices();
+  const acessoNovoRef = doc(db, "acessos", matriculaNormalizada);
+  
+  if (guarda.matricula !== matriculaNormalizada) {
+    if ((await getDoc(acessoNovoRef)).exists()) {
+      throw new Error("Esta nova matrícula já está cadastrada.");
+    }
+  }
+
+  const batch = writeBatch(db);
+  const usuarioRef = doc(db, "usuarios", guarda.uid);
+  
+  batch.update(usuarioRef, { 
+    nome: nomeLimpo, 
+    matricula: matriculaNormalizada, 
+    atualizadoEm: serverTimestamp() 
+  });
+
+  if (guarda.matricula !== matriculaNormalizada) {
+    const acessoAntigoRef = doc(db, "acessos", guarda.matricula);
+    const acessoAntigoSnap = await getDoc(acessoAntigoRef);
+    if (acessoAntigoSnap.exists()) {
+      batch.set(acessoNovoRef, {
+        ...acessoAntigoSnap.data(),
+        atualizadoEm: serverTimestamp()
+      });
+      batch.delete(acessoAntigoRef);
+    }
+  }
+
+  await batch.commit();
+  return { ...guarda, nome: nomeLimpo, matricula: matriculaNormalizada };
+}

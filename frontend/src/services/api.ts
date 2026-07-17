@@ -27,6 +27,8 @@ export type MovimentacaoPayload = {
 };
 export type Chave = {
   codigo: string;
+  nome?: string;
+  descricao?: string;
   status: "disponivel" | "em_uso";
   responsavelAtual: { nome: string; matricula: string } | null;
   ultimaMovimentacaoEm: string | null;
@@ -78,6 +80,8 @@ function mapearChave(
   if (!dados) throw criarErro("CHAVE_NAO_ENCONTRADA", "Chave nao cadastrada.", 404);
   return ChaveSchema.parse({
     codigo: typeof dados.codigo === "string" ? dados.codigo : codigoPadrao ?? decodeURIComponent(snapshot.id),
+    nome: dados.nome,
+    descricao: dados.descricao,
     status: dados.status,
     responsavelAtual: dados.responsavelAtual ?? null,
     ultimaMovimentacaoEm: paraIso(dados.ultimaMovimentacaoEm),
@@ -199,6 +203,7 @@ async function executarMovimentacao(
 
     const timestamp = Timestamp.fromDate(new Date(payloadCanonico.timestampLocal));
     const chaveAtualizada: Chave = {
+      ...chave,
       codigo,
       status: tipo === "retirada" ? "em_uso" : "disponivel",
       responsavelAtual: tipo === "retirada" ? payloadCanonico.responsavel : null,
@@ -252,7 +257,7 @@ export const api = {
     }
   },
 
-  async cadastrarChave(codigo: string): Promise<Chave> {
+  async cadastrarChave(codigo: string, nome?: string, descricao?: string): Promise<Chave> {
     const { db } = await bancoAutenticado();
     const codigoNormalizado = codigo.trim().toUpperCase();
     if (!/^[A-Z]+\/[A-Z0-9]+$/.test(codigoNormalizado)) {
@@ -265,12 +270,68 @@ export const api = {
     }
     const novaChave: Chave = {
       codigo: codigoNormalizado,
+      nome: nome?.trim() || undefined,
+      descricao: descricao?.trim() || undefined,
       status: "disponivel",
       responsavelAtual: null,
       ultimaMovimentacaoEm: null,
     };
     const { setDoc } = await import("firebase/firestore");
     await setDoc(chaveRef, novaChave);
+    return novaChave;
+  },
+
+  async apagarChave(codigo: string): Promise<void> {
+    const { db } = await bancoAutenticado();
+    const chaveRef = await resolverChave(db, codigo);
+    const snapshot = await getDoc(chaveRef);
+    if (!snapshot.exists()) throw criarErro("CHAVE_NAO_ENCONTRADA", `Chave ${codigo} não encontrada.`, 404);
+    
+    const chave = mapearChave(snapshot, codigo);
+    if (chave.status === "em_uso") {
+      throw criarErro("CHAVE_EM_USO", "Não é possível apagar uma chave que está em uso.", 409);
+    }
+    
+    const { deleteDoc } = await import("firebase/firestore");
+    await deleteDoc(chaveRef);
+  },
+
+  async editarChave(codigoAntigo: string, novoCodigo: string, novoNome?: string, novaDescricao?: string): Promise<Chave> {
+    const { db } = await bancoAutenticado();
+    const codigoNormalizado = novoCodigo.trim().toUpperCase();
+    if (!/^[A-Z]+\/[A-Z0-9]+$/.test(codigoNormalizado)) {
+      throw criarErro("CODIGO_INVALIDO", "Código deve seguir o padrão Bloco/Sala, ex: A/S1", 400);
+    }
+    
+    if (codigoAntigo === codigoNormalizado) {
+      return this.buscarChave(codigoAntigo);
+    }
+
+    const chaveAntigaRef = await resolverChave(db, codigoAntigo);
+    const snapshotAntiga = await getDoc(chaveAntigaRef);
+    if (!snapshotAntiga.exists()) {
+      throw criarErro("CHAVE_NAO_ENCONTRADA", `Chave ${codigoAntigo} não encontrada.`, 404);
+    }
+
+    const chaveAntiga = mapearChave(snapshotAntiga, codigoAntigo);
+    const novaChaveRef = doc(db, "chaves", encodeURIComponent(codigoNormalizado));
+    const snapshotNova = await getDoc(novaChaveRef);
+    if (snapshotNova.exists()) {
+      throw criarErro("CHAVE_JA_EXISTE", `A chave ${codigoNormalizado} já está cadastrada.`, 409);
+    }
+
+    const novaChave: Chave = {
+      ...chaveAntiga,
+      codigo: codigoNormalizado,
+      nome: novoNome?.trim() || undefined,
+      descricao: novaDescricao?.trim() || undefined,
+    };
+
+    const { writeBatch } = await import("firebase/firestore");
+    const batch = writeBatch(db);
+    batch.set(novaChaveRef, novaChave);
+    batch.delete(chaveAntigaRef);
+    await batch.commit();
     return novaChave;
   },
 

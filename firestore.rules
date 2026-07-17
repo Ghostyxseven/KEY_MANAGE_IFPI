@@ -17,17 +17,17 @@ service cloud.firestore {
       allow list: if admin();
       allow create: if admin() && validUser(request.resource.data, uid) && request.resource.data.perfil == 'guarda';
       allow update: if admin() && validUser(request.resource.data, uid) && request.resource.data.uid == resource.data.uid && request.resource.data.matricula == resource.data.matricula && request.resource.data.perfil == resource.data.perfil;
-      allow delete: if false;
+      allow delete: if admin();
     }
     match /acessos/{matricula} {
       allow read: if admin();
       allow create, update: if admin() && request.resource.data.keys().hasOnly(['uid', 'authEmail', 'ativo', 'criadoEm', 'atualizadoEm']) && request.resource.data.uid is string && request.resource.data.authEmail is string && request.resource.data.ativo is bool;
-      allow delete: if false;
+      allow delete: if admin();
     }
     match /chaves/{keyId} {
       allow read: if active();
       allow create: if admin() && request.resource.data.keys().hasOnly(['codigo', 'status', 'responsavelAtual', 'ultimaMovimentacaoEm']) && request.resource.data.codigo is string && request.resource.data.codigo.size() >= 2 && request.resource.data.codigo.size() <= 20 && request.resource.data.status == 'disponivel' && request.resource.data.responsavelAtual == null && request.resource.data.ultimaMovimentacaoEm == null;
-      allow delete: if false;
+      allow delete: if admin();
       allow update: if guard() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responsavelAtual', 'ultimaMovimentacaoEm', 'ultimaMovimentacaoId']) && request.resource.data.codigo == resource.data.codigo && request.resource.data.ultimaMovimentacaoEm is timestamp && request.resource.data.ultimaMovimentacaoId is string && ((resource.data.status == 'disponivel' && request.resource.data.status == 'em_uso' && validPerson(request.resource.data.responsavelAtual)) || (resource.data.status == 'em_uso' && request.resource.data.status == 'disponivel' && request.resource.data.responsavelAtual == null)) && getAfter(/databases/$(database)/documents/movimentacoes/$(request.resource.data.ultimaMovimentacaoId)).data.autorUid == request.auth.uid;
     }
     match /movimentacoes/{movementId} {

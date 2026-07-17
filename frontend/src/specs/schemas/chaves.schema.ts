@@ -8,6 +8,8 @@ export const CodigoChaveSchema = z
 
 export const ChaveSchema = z.object({
   codigo: CodigoChaveSchema,
+  nome: z.string().trim().optional(),
+  descricao: z.string().trim().optional(),
   status: z.enum(["disponivel", "em_uso"]),
   responsavelAtual: z
     .object({
