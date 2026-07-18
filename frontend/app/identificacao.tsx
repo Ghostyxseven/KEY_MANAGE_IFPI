@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Animated, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useApp } from "../src/context/AppContext";
@@ -48,7 +48,7 @@ export default function IdentificacaoScreen(): React.ReactElement {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.page} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
         <View style={styles.brand}>
           <View style={styles.mark}><Text style={styles.markText}>IF</Text></View>
@@ -100,12 +100,12 @@ export default function IdentificacaoScreen(): React.ReactElement {
         </Pressable>
       </Animated.View>
       <Text style={styles.footer}>CoreTech • Gestão responsável e rastreável</Text>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24, gap: 24, backgroundColor: colors.background },
+  page: { flex: 1, backgroundColor: colors.background }, container: { flexGrow: 1, justifyContent: "center", padding: 24, gap: 24 },
   brand: { width: "100%", maxWidth: 460, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 12 },
   mark: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center" },
   markText: { color: "#fff", fontSize: 19, fontWeight: "900" },

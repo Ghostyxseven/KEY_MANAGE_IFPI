@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
-import { Alert, View, Text, FlatList, TouchableOpacity, StyleSheet, Modal, TextInput, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Modal, TextInput, ActivityIndicator, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { listarGuardas, cadastrarGuarda, editarNomeGuarda, alterarStatusGuarda, type Usuario } from "../../src/services/auth";
 import { SearchBar } from "../../src/presentation/components/SearchBar";
 import { showToast } from "../../src/presentation/components/Toast";
 import { colors, shadows } from "../../src/presentation/theme";
+import { confirmAction } from "../../src/presentation/confirmAction";
+import { FilterChips } from "../../src/presentation/components/FilterChips";
 
 function mensagemErro(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
@@ -27,6 +29,7 @@ export default function GerenciarGuardasScreen(): React.ReactNode {
   const [pin, setPin] = useState("");
   const [guardaEditando, setGuardaEditando] = useState<Usuario | null>(null);
   const [busca, setBusca] = useState("");
+  const [filtro, setFiltro] = useState<"ativos" | "excluidos">("ativos");
 
   const carregarGuardas = useCallback(async () => {
     setLoading(true);
@@ -43,6 +46,8 @@ export default function GerenciarGuardasScreen(): React.ReactNode {
   useEffect(() => { void carregarGuardas(); }, [carregarGuardas]);
 
   const filtrados = guardas.filter((g) => {
+    if (filtro === "ativos" && !g.ativo) return false;
+    if (filtro === "excluidos" && g.ativo) return false;
     if (!busca.trim()) return true;
     const q = busca.toLowerCase();
     return g.nome.toLowerCase().includes(q) || g.matricula.toLowerCase().includes(q);
@@ -85,18 +90,15 @@ export default function GerenciarGuardasScreen(): React.ReactNode {
   const handleBloquear = async (guarda: Usuario): Promise<void> => {
     try {
       await alterarStatusGuarda(guarda, false);
-      showToast(`${guarda.nome} foi bloqueado.`, "info");
+      showToast(`${guarda.nome} foi excluído da lista ativa.`, "info");
       void carregarGuardas();
     } catch (error: unknown) {
-      showToast(mensagemErro(error, "Falha ao bloquear guarda."), "error");
+      showToast(mensagemErro(error, "Falha ao excluir guarda."), "error");
     }
   };
 
   const confirmarBloqueio = (guarda: Usuario): void => {
-    Alert.alert("Bloquear acesso?", `${guarda.nome} perderá o acesso aos dados protegidos.`, [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Bloquear", style: "destructive", onPress: (): void => { void handleBloquear(guarda); } },
-    ]);
+    confirmAction({ title: "Excluir guarda?", message: `${guarda.nome} perderá o acesso e sairá da lista ativa. O histórico será preservado e o guarda poderá ser restaurado.`, confirmLabel: "Excluir", destructive: true, onConfirm: (): void => { void handleBloquear(guarda); } });
   };
 
   const renderItem = ({ item }: { item: Usuario }): React.ReactElement => {
@@ -128,7 +130,7 @@ export default function GerenciarGuardasScreen(): React.ReactNode {
           </TouchableOpacity>
           {item.ativo ? (
             <TouchableOpacity style={styles.iconBtn} onPress={() => confirmarBloqueio(item)}>
-              <MaterialCommunityIcons name="account-lock" size={18} color={colors.warning} />
+              <MaterialCommunityIcons name="account-remove" size={18} color={colors.danger} />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={[styles.iconBtn, { backgroundColor: colors.successSoft }]} onPress={() => void handleReativar(item)}>
@@ -154,6 +156,7 @@ export default function GerenciarGuardasScreen(): React.ReactNode {
 
       <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
         <SearchBar value={busca} onChangeText={setBusca} placeholder="Buscar guarda..." />
+        <FilterChips chips={[{ label: "Ativos", value: "ativos" }, { label: "Excluídos", value: "excluidos" }]} selected={filtro} onSelect={(value) => setFiltro(value as "ativos" | "excluidos")} />
       </View>
 
       {loading ? (
@@ -167,7 +170,7 @@ export default function GerenciarGuardasScreen(): React.ReactNode {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <MaterialCommunityIcons name="account-off" size={40} color={colors.muted} />
-              <Text style={styles.empty}>{busca ? "Nenhum guarda encontrado." : "Nenhum guarda cadastrado."}</Text>
+              <Text style={styles.empty}>{busca ? "Nenhum guarda encontrado." : filtro === "ativos" ? "Nenhum guarda ativo." : "Nenhum guarda excluído."}</Text>
             </View>
           }
         />
@@ -175,7 +178,7 @@ export default function GerenciarGuardasScreen(): React.ReactNode {
 
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
             <Text style={styles.modalTitle}>{guardaEditando ? "Editar Guarda" : "Novo Guarda"}</Text>
             <TextInput style={styles.input} placeholder="Nome" value={nome} onChangeText={setNome} />
             <TextInput style={styles.input} placeholder="Matrícula" value={matricula} onChangeText={setMatricula} autoCapitalize="none" editable={!guardaEditando} />
@@ -191,7 +194,7 @@ export default function GerenciarGuardasScreen(): React.ReactNode {
                 <Text style={styles.modalBtnTextSave}>Salvar</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -221,7 +224,7 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: "center", marginTop: 40, gap: 12 },
   empty: { textAlign: "center", color: colors.muted },
   modalContainer: { flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.5)", padding: 16 },
-  modalContent: { backgroundColor: colors.surface, padding: 24, borderRadius: 16, ...shadows.card },
+  modalContent: { maxHeight: "90%", backgroundColor: colors.surface, borderRadius: 16, ...shadows.card }, modalScroll: { padding: 24 },
   modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 16 },
   input: { borderWidth: 1, borderColor: colors.border, padding: 12, borderRadius: 8, fontSize: 16, marginBottom: 12 },
   helper: { color: colors.muted, fontSize: 12, marginTop: -6, marginBottom: 12 },

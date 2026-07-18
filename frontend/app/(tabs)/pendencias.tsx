@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { api } from "../../src/services/api";
 import { storage, type MovimentacaoPending } from "../../src/services/storage";
 import { showToast } from "../../src/presentation/components/Toast";
 import { colors, shadows } from "../../src/presentation/theme";
+import { confirmAction } from "../../src/presentation/confirmAction";
 
 export default function PendenciasScreen(): React.ReactElement {
   const [itens, setItens] = useState<MovimentacaoPending[]>([]);
@@ -34,14 +35,7 @@ export default function PendenciasScreen(): React.ReactElement {
   };
 
   const descartar = (item: MovimentacaoPending): void => {
-    Alert.alert(
-      "Descartar operação?",
-      `A ${item.tipo} da chave ${item.chaveCodigo} será removida somente deste dispositivo. Esta ação não pode ser desfeita.`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Descartar", style: "destructive", onPress: (): void => { void storage.removerMovimentacoesPendentes([item.id]).then(carregar); } },
-      ],
-    );
+    confirmAction({ title: "Descartar operação?", message: `A ${item.tipo} da chave ${item.chaveCodigo} será removida somente deste dispositivo. Esta ação não pode ser desfeita.`, confirmLabel: "Descartar", destructive: true, onConfirm: (): void => { void storage.removerMovimentacoesPendentes([item.id]).then(carregar); } });
   };
 
   return (

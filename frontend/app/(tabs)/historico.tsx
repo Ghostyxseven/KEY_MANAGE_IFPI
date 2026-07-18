@@ -13,6 +13,7 @@ type Movimentacao = {
   chaveCodigo: string;
   tipo: "retirada" | "devolucao";
   responsavel: { nome: string; matricula: string };
+  aluno: { nome: string; matricula?: string };
   timestampLocal: string;
   deviceId: string;
   syncStatus: string;
@@ -59,7 +60,9 @@ export default function HistoricoScreen(): React.ReactNode {
     return movimentacoes.filter((m) =>
       m.chaveCodigo.toLowerCase().includes(q) ||
       m.responsavel.nome.toLowerCase().includes(q) ||
-      m.responsavel.matricula.toLowerCase().includes(q)
+      m.responsavel.matricula.toLowerCase().includes(q) ||
+      m.aluno.nome.toLowerCase().includes(q) ||
+      (m.aluno.matricula?.toLowerCase().includes(q) ?? false)
     );
   }, [movimentacoes, busca]);
 
@@ -79,7 +82,7 @@ export default function HistoricoScreen(): React.ReactNode {
 
   const abrirDetalhe = (codigo: string): void => {
     const parsed = CodigoChaveSchema.safeParse(codigo);
-    if (parsed.success) router.push(`/historico/${codigo}`);
+    if (parsed.success) router.push(`/historico/${encodeURIComponent(codigo)}`);
   };
 
   const renderItem = ({ item }: { item: SectionItem }): React.ReactElement => {
@@ -109,8 +112,9 @@ export default function HistoricoScreen(): React.ReactNode {
           </View>
           <View style={styles.codeRow}>
             <MaterialCommunityIcons name="account" size={16} color={colors.muted} />
-            <Text style={styles.responsavel}>{mov.responsavel.nome} ({mov.responsavel.matricula})</Text>
+            <Text style={styles.responsavel}>Aluno: {mov.aluno.nome}{mov.aluno.matricula ? ` • ${mov.aluno.matricula}` : ""}</Text>
           </View>
+          <Text style={styles.operador}>Registrado por {mov.responsavel.nome}</Text>
         </View>
 
         <Text style={styles.data}>
@@ -142,7 +146,7 @@ export default function HistoricoScreen(): React.ReactNode {
               <Text style={styles.heroTitle}>Histórico recente</Text>
               <Text style={styles.heroSubtitle}>{movimentacoes.length} registros encontrados</Text>
             </View>
-            <SearchBar value={busca} onChangeText={setBusca} placeholder="Buscar por chave ou responsável..." />
+            <SearchBar value={busca} onChangeText={setBusca} placeholder="Buscar por chave, aluno ou operador..." />
           </View>
         }
         refreshing={carregando}
@@ -176,6 +180,7 @@ const styles = StyleSheet.create({
   codeRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   codigo: { fontSize: 16, fontWeight: "bold", color: colors.text },
   responsavel: { fontSize: 13, color: "#374151" },
+  operador: { fontSize: 12, color: colors.muted, marginLeft: 22 },
   data: { fontSize: 12, color: colors.muted },
   emptyContainer: { alignItems: "center", marginTop: 40, gap: 12 },
   empty: { textAlign: "center", color: colors.muted },

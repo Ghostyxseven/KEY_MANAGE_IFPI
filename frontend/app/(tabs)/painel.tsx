@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, StyleSheet, Animated, Platform, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Animated, Platform, Pressable, ActivityIndicator, ScrollView } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { colors, shadows } from "../../src/presentation/theme";
 import { useApp } from "../../src/context/AppContext";
 import { api } from "../../src/services/api";
 import { listarGuardas } from "../../src/services/auth";
+import { EmptyState, Screen, ScreenHeader } from "../../src/presentation/components/Screen";
+import { showToast } from "../../src/presentation/components/Toast";
 
 function AnimatedCard({ children, onPress, delay = 0 }: { children: React.ReactNode; onPress: () => void; delay?: number }): React.ReactElement {
   const scale = useRef(new Animated.Value(1)).current;
@@ -49,7 +51,7 @@ export default function AdminScreen(): React.ReactNode {
       setTotalGuardas(guardas.length);
       setGuardasAtivos(guardas.filter((g) => g.ativo).length);
     } catch {
-      // silently fail
+      showToast("Não foi possível atualizar os indicadores.", "error");
     } finally {
       setCarregando(false);
     }
@@ -59,19 +61,13 @@ export default function AdminScreen(): React.ReactNode {
 
   if (perfil !== "admin") {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Acesso negado.</Text>
-      </View>
+      <Screen><EmptyState icon="shield-lock-outline" title="Acesso restrito" description="Esta área está disponível somente para administradores ativos." /></Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.hero}>
-        <Text style={styles.heroEyebrow}>ADMINISTRAÇÃO</Text>
-        <Text style={styles.heroTitle}>Painel de Controle</Text>
-        <Text style={styles.heroSubtitle}>Gerencie os guardas e as chaves do sistema.</Text>
-      </View>
+    <Screen><ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScreenHeader eyebrow="Administração" title="Painel de controle" description="Acompanhe a operação e acesse rapidamente as áreas de gestão." />
 
       {/* Contadores */}
       <View style={styles.counters}>
@@ -114,11 +110,12 @@ export default function AdminScreen(): React.ReactNode {
           <Text style={styles.cardDesc}>Consultar as últimas ações administrativas</Text>
         </AnimatedCard>
       </View>
-    </View>
+    </ScrollView></Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: { paddingBottom: 32 },
   container: { flex: 1, backgroundColor: colors.background, padding: 16 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: { fontSize: 18, color: colors.danger, fontWeight: "bold" },

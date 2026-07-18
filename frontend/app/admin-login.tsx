@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useApp } from "../src/context/AppContext";
 import { AppButton } from "../src/presentation/components/AppButton";
 import { colors, shadows } from "../src/presentation/theme";
+import { showToast } from "../src/presentation/components/Toast";
 import { recuperarSenhaAdministrador } from "../src/services/auth";
 
 export default function AdminLoginScreen(): React.ReactElement {
@@ -15,7 +16,7 @@ export default function AdminLoginScreen(): React.ReactElement {
 
   const login = async (): Promise<void> => {
     if (!email.trim() || !senha.trim()) {
-      Alert.alert("Aviso", "Preencha e-mail e senha.");
+      showToast("Preencha e-mail e senha.", "warning");
       return;
     }
     setBusy(true);
@@ -24,24 +25,24 @@ export default function AdminLoginScreen(): React.ReactElement {
       setSenha("");
       // O redirect para /(tabs)/painel é feito automaticamente pelo _layout.tsx
     } catch (e) {
-      Alert.alert("Acesso negado", e instanceof Error ? e.message : "Credenciais inválidas.");
+      showToast(e instanceof Error ? e.message : "Credenciais inválidas.", "error");
     } finally {
       setBusy(false);
     }
   };
 
   const recuperarSenha = async (): Promise<void> => {
-    if (!email.trim()) { Alert.alert("Recuperação", "Informe primeiro o e-mail administrativo."); return; }
+    if (!email.trim()) { showToast("Informe primeiro o e-mail administrativo.", "warning"); return; }
     try {
       await recuperarSenhaAdministrador(email);
-      Alert.alert("E-mail enviado", "Se a conta existir, o Firebase enviará as instruções de redefinição.");
+      showToast("Se a conta existir, o Firebase enviará as instruções de redefinição.", "success");
     } catch {
-      Alert.alert("Recuperação", "Não foi possível solicitar a redefinição agora.");
+      showToast("Não foi possível solicitar a redefinição agora.", "error");
     }
   };
 
   return (
-    <View style={s.loginPage}>
+    <ScrollView style={s.page} contentContainerStyle={s.loginPage} keyboardShouldPersistTaps="handled">
       <View style={s.loginCard}>
         <View style={s.icon}>
           <Text style={s.iconText}>A</Text>
@@ -76,12 +77,12 @@ export default function AdminLoginScreen(): React.ReactElement {
           <Text style={s.link}>Voltar ao acesso do guarda</Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  loginPage: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: colors.background },
+  page: { flex: 1, backgroundColor: colors.background }, loginPage: { flexGrow: 1, justifyContent: "center", padding: 24 },
   loginCard: { width: "100%", maxWidth: 460, alignSelf: "center", backgroundColor: colors.surface, borderRadius: 24, padding: 28, gap: 14, borderWidth: 1, borderColor: colors.border, ...shadows.card },
   icon: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center" },
   iconText: { color: "#fff", fontSize: 22, fontWeight: "900" },

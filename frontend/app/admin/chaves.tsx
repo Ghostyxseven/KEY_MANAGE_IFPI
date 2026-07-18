@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
-import { Alert, View, Text, FlatList, TouchableOpacity, StyleSheet, Modal, TextInput, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Modal, TextInput, ActivityIndicator, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { api, type Chave } from "../../src/services/api";
 import { SearchBar } from "../../src/presentation/components/SearchBar";
 import { showToast } from "../../src/presentation/components/Toast";
 import { colors, shadows } from "../../src/presentation/theme";
+import { confirmAction } from "../../src/presentation/confirmAction";
 
 function mensagemErro(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
@@ -19,6 +20,7 @@ export default function GerenciarChavesScreen(): React.ReactNode {
   const [descricaoInput, setDescricaoInput] = useState("");
   const [chaveEditando, setChaveEditando] = useState<Chave | null>(null);
   const [busca, setBusca] = useState("");
+  const [arquivando, setArquivando] = useState<string | null>(null);
 
   const carregarChaves = useCallback(async () => {
     setLoading(true);
@@ -58,18 +60,18 @@ export default function GerenciarChavesScreen(): React.ReactNode {
   };
 
   const handleApagar = (codigo: string): void => {
-    Alert.alert("Arquivar chave?", `A chave ${codigo} deixará de aparecer no quadro, mas seu histórico será preservado.`, [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Arquivar", style: "destructive", onPress: (): void => { void (async (): Promise<void> => {
+    confirmAction({ title: "Desativar chave?", message: `A chave ${codigo} deixará de aparecer no quadro, mas seu histórico será preservado.`, confirmLabel: "Desativar", destructive: true, onConfirm: (): void => { void (async (): Promise<void> => {
+      setArquivando(codigo);
       try {
         await api.apagarChave(codigo);
-        showToast("Chave arquivada com sucesso!", "success");
-        void carregarChaves();
+        showToast("Chave desativada com sucesso!", "success");
+        await carregarChaves();
       } catch (error: unknown) {
-        showToast(mensagemErro(error, "Falha ao arquivar a chave."), "error");
+        showToast(mensagemErro(error, "Falha ao desativar a chave."), "error");
+      } finally {
+        setArquivando(null);
       }
-    })(); } },
-    ]);
+    })(); } });
   };
 
   const renderItem = ({ item }: { item: Chave }): React.ReactElement => {
@@ -97,8 +99,8 @@ export default function GerenciarChavesScreen(): React.ReactNode {
           }}>
             <MaterialCommunityIcons name="pencil" size={20} color={colors.brand} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => handleApagar(item.codigo)}>
-            <MaterialCommunityIcons name="delete" size={20} color={colors.danger} />
+          <TouchableOpacity accessibilityLabel={`Desativar chave ${item.codigo}`} disabled={arquivando === item.codigo} style={styles.iconBtn} onPress={() => handleApagar(item.codigo)}>
+            {arquivando === item.codigo ? <ActivityIndicator size={20} color={colors.danger} /> : <MaterialCommunityIcons name="archive-arrow-down-outline" size={20} color={colors.danger} />}
           </TouchableOpacity>
         </View>
       </View>
@@ -140,7 +142,7 @@ export default function GerenciarChavesScreen(): React.ReactNode {
 
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalScroll} keyboardShouldPersistTaps="handled">
             <Text style={styles.modalTitle}>{chaveEditando ? "Editar Chave" : "Nova Chave"}</Text>
             <TextInput style={styles.input} placeholder="Código (ex.: Sala 2 ou A/S3) *" value={codigoInput} onChangeText={setCodigoInput} autoCapitalize="characters" editable={!chaveEditando} />
             {chaveEditando && <Text style={styles.helper}>O código é a identidade histórica da chave e não pode ser alterado.</Text>}
@@ -154,7 +156,7 @@ export default function GerenciarChavesScreen(): React.ReactNode {
                 <Text style={styles.modalBtnTextSave}>Salvar</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: "center", marginTop: 40, gap: 12 },
   empty: { textAlign: "center", color: colors.muted },
   modalContainer: { flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.5)", padding: 16 },
-  modalContent: { backgroundColor: colors.surface, padding: 24, borderRadius: 16, ...shadows.card },
+  modalContent: { maxHeight: "90%", backgroundColor: colors.surface, borderRadius: 16, ...shadows.card }, modalScroll: { padding: 24 },
   modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 16 },
   input: { borderWidth: 1, borderColor: colors.border, padding: 12, borderRadius: 8, fontSize: 16, marginBottom: 12 },
   helper: { color: colors.muted, fontSize: 12, marginTop: -6, marginBottom: 12 },

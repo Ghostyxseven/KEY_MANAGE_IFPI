@@ -13,6 +13,7 @@ export function SearchBar({ value, onChangeText, placeholder = "Buscar..." }: Pr
     <View style={s.container}>
       <MaterialCommunityIcons name="magnify" size={20} color={colors.muted} />
       <TextInput
+        accessibilityLabel={placeholder}
         style={s.input}
         placeholder={placeholder}
         placeholderTextColor={colors.muted}
@@ -33,9 +34,9 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surface,
-    borderRadius: 12,
+        borderRadius: 14,
     paddingHorizontal: 14,
-    height: 44,
+    minHeight: 48,
     borderWidth: 1,
     borderColor: colors.border,
     gap: 8,

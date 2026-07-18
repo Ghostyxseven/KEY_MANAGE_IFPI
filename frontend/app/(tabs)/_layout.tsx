@@ -12,7 +12,7 @@ import { colors } from "../../src/presentation/theme";
 export default function TabLayout(): React.ReactNode {
   const { sair, perfil } = useApp();
   return (
-    <Tabs screenOptions={{ headerStyle: styles.header, headerTitleStyle: styles.headerTitle, headerShadowVisible: false, headerRight: () => <Pressable style={styles.exit} onPress={() => void sair()}><Text style={styles.exitText}>Sair</Text></Pressable>, tabBarActiveTintColor: colors.brand, tabBarInactiveTintColor: colors.muted, tabBarStyle: styles.tabBar, tabBarLabelStyle: styles.tabLabel }}>
+    <Tabs screenOptions={{ headerStyle: styles.header, headerTitleStyle: styles.headerTitle, headerShadowVisible: false, headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Sair do sistema" style={styles.exit} onPress={() => void sair()}><MaterialCommunityIcons name="logout" size={17} color={colors.brand} /><Text style={styles.exitText}>Sair</Text></Pressable>, tabBarActiveTintColor: colors.brand, tabBarInactiveTintColor: colors.muted, tabBarStyle: styles.tabBar, tabBarLabelStyle: styles.tabLabel }}>
       <Tabs.Screen
         name="quadro"
         options={{
@@ -53,6 +53,6 @@ export default function TabLayout(): React.ReactNode {
 }
 
 const styles = StyleSheet.create({
-  header: { backgroundColor: colors.surface }, headerTitle: { color: colors.brandDark, fontWeight: "800" }, exit: { marginRight: 16, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10, backgroundColor: colors.brandSoft }, exitText: { color: colors.brand, fontWeight: "700" },
+  header: { backgroundColor: colors.surface }, headerTitle: { color: colors.brandDark, fontWeight: "800" }, exit: { marginRight: 16, paddingHorizontal: 12, minHeight: 38, flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: colors.brandSoft }, exitText: { color: colors.brand, fontWeight: "700" },
   tabBar: { height: 68, paddingTop: 7, paddingBottom: 8, borderTopColor: colors.border, backgroundColor: colors.surface }, tabLabel: { fontSize: 12, fontWeight: "700" },
 });

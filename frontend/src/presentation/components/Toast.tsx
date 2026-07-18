@@ -10,7 +10,7 @@ export function showToast(text: string, type: ToastType = "success"): void {
   globalShow?.(text, type);
 }
 
-const ICONS: Record<ToastType, string> = { success: "✅", error: "❌", info: "ℹ️", warning: "⚠️" };
+const ICONS: Record<ToastType, string> = { success: "✓", error: "×", info: "i", warning: "!" };
 const BG: Record<ToastType, string> = { success: "#065F46", error: "#991B1B", info: "#1E40AF", warning: "#92400E" };
 
 function ToastItem({ msg, onDone }: { msg: ToastMessage; onDone: () => void }): React.ReactElement {
@@ -33,7 +33,7 @@ function ToastItem({ msg, onDone }: { msg: ToastMessage; onDone: () => void }): 
 
   return (
     <Animated.View style={[s.toast, { backgroundColor: BG[msg.type], opacity, transform: [{ translateY }] }]}>
-      <Text style={s.icon}>{ICONS[msg.type]}</Text>
+      <View style={s.iconCircle}><Text style={s.icon}>{ICONS[msg.type]}</Text></View>
       <Text style={s.text} numberOfLines={2}>{msg.text}</Text>
     </Animated.View>
   );
@@ -72,6 +72,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
 const s = StyleSheet.create({
   container: { position: "absolute", top: 60, left: 16, right: 16, zIndex: 9999, alignItems: "center", gap: 8 },
   toast: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 14, borderRadius: 14, gap: 10, maxWidth: 460, width: "100%", shadowColor: "#000", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
-  icon: { fontSize: 18 },
+  iconCircle: { width: 24, height: 24, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" }, icon: { color: "#fff", fontSize: 15, fontWeight: "900" },
   text: { color: "#fff", fontSize: 14, fontWeight: "600", flex: 1 },
 });

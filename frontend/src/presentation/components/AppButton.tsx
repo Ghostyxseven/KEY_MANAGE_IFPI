@@ -11,7 +11,7 @@ export function AppButton({ label, onPress, disabled, loading, variant = "primar
 }
 
 const styles = StyleSheet.create({
-  base: { minHeight: 48, borderRadius: 12, paddingHorizontal: 18, alignItems: "center", justifyContent: "center" },
+  base: { minHeight: 48, borderRadius: 14, paddingHorizontal: 18, alignItems: "center", justifyContent: "center" },
   primary: { backgroundColor: colors.brand }, secondary: { backgroundColor: colors.success }, danger: { backgroundColor: colors.danger },
   ghost: { backgroundColor: colors.brandSoft, borderWidth: 1, borderColor: "#C8DAEC" }, disabled: { opacity: 0.45 }, pressed: { opacity: 0.82 },
   label: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" }, ghostLabel: { color: colors.brand },
