@@ -1,0 +1,21 @@
+# Tarefas: Frontend funcional e responsivo
+
+- [x] T001 Expandir tokens em `frontend/src/presentation/theme.ts`
+- [x] T002 Criar componentes estruturais em `frontend/src/presentation/components/Screen.tsx`
+- [x] T003 Refinar navegação e componentes em `frontend/src/presentation/components/` e `frontend/app/(tabs)/_layout.tsx`
+- [x] T004 [US1] Refinar autenticação em `frontend/app/identificacao.tsx` e `frontend/app/admin-login.tsx`
+- [x] T005 [US1] Refinar quadro em `frontend/app/(tabs)/quadro.tsx`
+- [x] T006 [US1] Refinar movimentações em `frontend/app/retirada/[codigo].tsx` e `frontend/app/devolucao/[codigo].tsx`
+- [x] T007 [US3] Refinar histórico em `frontend/app/(tabs)/historico.tsx` e `frontend/app/historico/[codigo].tsx`
+- [x] T008 [US3] Refinar pendências e auditoria em `frontend/app/(tabs)/pendencias.tsx` e `frontend/app/admin/auditoria.tsx`
+- [x] T009 [US2] Refinar painel em `frontend/app/(tabs)/painel.tsx`
+- [x] T010 [US2] Refinar chaves em `frontend/app/admin/chaves.tsx`
+- [x] T011 [US2] Refinar guardas em `frontend/app/admin/guardas.tsx`
+- [x] T012 Corrigir codificação visível em `frontend/app/` e `frontend/src/presentation/`
+- [x] T013 Validar gates em `frontend/`
+- [x] T014 Corrigir atualização transacional de movimentações legadas em `frontend/src/services/api.ts`
+- [x] T015 Implementar exclusão lógica e restauração de guardas em `frontend/app/admin/guardas.tsx`
+- [x] T016 Registrar aluno obrigatório na retirada e associá-lo automaticamente à devolução em `frontend/app/(tabs)/quadro.tsx`
+- [x] T017 Alinhar schemas, transações e Security Rules ao aluno destinatário em `frontend/src/specs/schemas/chaves.schema.ts`, `frontend/src/services/api.ts` e `firestore.rules`
+- [x] T018 Vincular pendências offline ao UID criador em `frontend/src/services/storage.ts` e `frontend/src/services/api.ts`
+- [x] T019 Registrar sincronização Android com WorkManager em `frontend/src/services/backgroundSync.ts` e `frontend/app/_layout.tsx`
