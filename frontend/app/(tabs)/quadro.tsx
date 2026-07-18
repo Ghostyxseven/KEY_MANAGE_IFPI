@@ -1,9 +1,10 @@
 import { useCallback, useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, TextInput, ScrollView } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Network from "expo-network";
-import { ChaveSchema, CodigoChaveSchema } from "../../src/specs/schemas/chaves.schema";
+import { ChaveSchema, CodigoChaveSchema, RegistroMovimentacaoRequestSchema } from "../../src/specs/schemas/chaves.schema";
+import { useApp } from "../../src/context/AppContext";
 import { api } from "../../src/services/api";
 import { storage } from "../../src/services/storage";
 import { SearchBar } from "../../src/presentation/components/SearchBar";
@@ -17,6 +18,7 @@ type Chave = {
   descricao?: string;
   status: "disponivel" | "em_uso";
   responsavelAtual: { nome: string; matricula: string } | null;
+  alunoAtual: { nome: string; matricula?: string } | null;
   ultimaMovimentacaoEm: string | null;
   arquivada: boolean;
 };
@@ -35,6 +37,12 @@ export default function QuadroChavesScreen(): React.ReactNode {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
   const router = useRouter();
+  const { nomeGuarda, matriculaGuarda } = useApp();
+  const [retirando, setRetirando] = useState<string | null>(null);
+  const [devolvendo, setDevolvendo] = useState<string | null>(null);
+  const [chaveRetirada, setChaveRetirada] = useState<Chave | null>(null);
+  const [nomeAluno, setNomeAluno] = useState("");
+  const [matriculaAluno, setMatriculaAluno] = useState("");
 
   const carregarChaves = useCallback(async (): Promise<void> => {
     try {
@@ -96,20 +104,74 @@ export default function QuadroChavesScreen(): React.ReactNode {
   const totalDisponivel = chaves.filter((c) => c.status === "disponivel").length;
   const totalEmUso = chaves.filter((c) => c.status === "em_uso").length;
 
-  const abrirRetirada = (codigo: string): void => {
+  const handleRetirada = (codigo: string): void => {
     const parsed = CodigoChaveSchema.safeParse(codigo);
     if (!parsed.success) { showToast("Código de chave inválido.", "error"); return; }
-    router.push(`/retirada/${codigo}`);
+
+    const executar = async (): Promise<void> => {
+      const deviceId = await storage.getDeviceId();
+      const payload = RegistroMovimentacaoRequestSchema.safeParse({
+        responsavel: { nome: nomeGuarda, matricula: matriculaGuarda },
+        aluno: { nome: nomeAluno, matricula: matriculaAluno },
+        timestampLocal: new Date().toISOString(),
+        deviceId,
+      });
+      if (!payload.success) { showToast(payload.error.issues[0]?.message ?? "Informe o nome do aluno.", "warning"); return; }
+      setRetirando(codigo);
+      try {
+        await api.retirarChave(codigo, payload.data);
+        showToast("Retirada registrada com sucesso.", "success");
+        setChaveRetirada(null); setNomeAluno(""); setMatriculaAluno("");
+        void carregarChaves();
+      } catch (error) {
+        if (error instanceof Error && "status" in error && (error as Error & { status: number }).status === 409) {
+          showToast(error.message ?? "Esta chave já está em uso.", "warning");
+        } else {
+          showToast(error instanceof Error ? error.message : "Não foi possível registrar a retirada.", "error");
+        }
+      } finally {
+        setRetirando(null);
+      }
+    };
+
+    void executar();
   };
 
-  const abrirDevolucao = (codigo: string): void => {
+  const handleDevolucao = (chave: Chave): void => {
+    const codigo = chave.codigo;
     const parsed = CodigoChaveSchema.safeParse(codigo);
     if (!parsed.success) { showToast("Código de chave inválido.", "error"); return; }
-    router.push(`/devolucao/${codigo}`);
+
+    const executar = async (): Promise<void> => {
+      const deviceId = await storage.getDeviceId();
+      const payload = RegistroMovimentacaoRequestSchema.safeParse({
+        responsavel: { nome: nomeGuarda, matricula: matriculaGuarda },
+        aluno: chave.alunoAtual ?? chave.responsavelAtual ?? undefined,
+        timestampLocal: new Date().toISOString(),
+        deviceId,
+      });
+      if (!payload.success) { showToast("Preencha a identificação antes.", "error"); return; }
+      setDevolvendo(codigo);
+      try {
+        await api.devolverChave(codigo, payload.data);
+        showToast("Devolução registrada com sucesso.", "success");
+        void carregarChaves();
+      } catch (error) {
+        if (error instanceof Error && "status" in error && (error as Error & { status: number }).status === 409) {
+          showToast(error.message ?? "Esta chave já está disponível.", "warning");
+        } else {
+          showToast(error instanceof Error ? error.message : "Não foi possível registrar a devolução.", "error");
+        }
+      } finally {
+        setDevolvendo(null);
+      }
+    };
+
+    void executar();
   };
 
   const abrirHistorico = (codigo: string): void => {
-    router.push(`/historico/${codigo}`);
+    router.push(`/historico/${encodeURIComponent(codigo)}`);
   };
 
   const renderChave = ({ item }: { item: Chave }): React.ReactElement => {
@@ -136,7 +198,7 @@ export default function QuadroChavesScreen(): React.ReactNode {
           <View style={styles.responsavelRow}>
             <MaterialCommunityIcons name="account" size={16} color="#374151" />
             <Text style={styles.responsavel}>
-              {item.responsavelAtual.nome} ({item.responsavelAtual.matricula})
+              {item.alunoAtual?.nome ?? item.responsavelAtual.nome}{item.alunoAtual?.matricula ? ` • Matrícula ${item.alunoAtual.matricula}` : ""}
             </Text>
           </View>
         )}
@@ -144,20 +206,28 @@ export default function QuadroChavesScreen(): React.ReactNode {
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.button, disponivel ? styles.primaryButton : styles.disabledButton]}
-            onPress={() => abrirRetirada(item.codigo)}
-            disabled={!disponivel}
+            onPress={() => { setChaveRetirada(item); setNomeAluno(""); setMatriculaAluno(""); }}
+            disabled={!disponivel || retirando === item.codigo}
           >
-            <MaterialCommunityIcons name="arrow-up-circle" size={16} color={disponivel ? "#fff" : "#9ca3af"} />
-            <Text style={[styles.buttonText, disponivel && styles.primaryButtonText]}>Retirar</Text>
+            {retirando === item.codigo ? (
+              <ActivityIndicator size={16} color="#fff" />
+            ) : (
+              <MaterialCommunityIcons name="arrow-up-circle" size={16} color={disponivel ? "#fff" : "#9ca3af"} />
+            )}
+            <Text style={[styles.buttonText, disponivel && styles.primaryButtonText]}>{retirando === item.codigo ? "Retirando..." : "Retirar"}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, !disponivel ? styles.secondaryButton : styles.disabledButton]}
-            onPress={() => abrirDevolucao(item.codigo)}
-            disabled={disponivel}
+            onPress={() => handleDevolucao(item)}
+            disabled={disponivel || devolvendo === item.codigo}
           >
-            <MaterialCommunityIcons name="arrow-down-circle" size={16} color={!disponivel ? "#fff" : "#9ca3af"} />
-            <Text style={[styles.buttonText, !disponivel && styles.secondaryButtonText]}>Devolver</Text>
+            {devolvendo === item.codigo ? (
+              <ActivityIndicator size={16} color="#fff" />
+            ) : (
+              <MaterialCommunityIcons name="arrow-down-circle" size={16} color={!disponivel ? "#fff" : "#9ca3af"} />
+            )}
+            <Text style={[styles.buttonText, !disponivel && styles.secondaryButtonText]}>{devolvendo === item.codigo ? "Devolvendo..." : "Devolver"}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.button, styles.ghostButton]} onPress={() => abrirHistorico(item.codigo)}>
@@ -228,6 +298,23 @@ export default function QuadroChavesScreen(): React.ReactNode {
           </View>
         }
       />
+      <Modal visible={chaveRetirada !== null} transparent animationType="slide" onRequestClose={() => setChaveRetirada(null)}>
+        <View style={styles.modalBackdrop}>
+          <ScrollView style={styles.modalCard} contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
+            <View style={styles.modalIcon}><MaterialCommunityIcons name="account-arrow-right" size={26} color={colors.brand} /></View>
+            <Text style={styles.modalTitle}>Registrar retirada</Text>
+            <Text style={styles.modalSubtitle}>Chave {chaveRetirada?.codigo} • informe quem ficará com a chave.</Text>
+            <Text style={styles.fieldLabel}>Nome do aluno *</Text>
+            <TextInput style={styles.input} value={nomeAluno} onChangeText={setNomeAluno} placeholder="Nome completo" autoCapitalize="words" autoFocus />
+            <Text style={styles.fieldLabel}>Matrícula do aluno (opcional)</Text>
+            <TextInput style={styles.input} value={matriculaAluno} onChangeText={setMatriculaAluno} placeholder="Matrícula" autoCapitalize="characters" returnKeyType="done" onSubmitEditing={() => chaveRetirada && handleRetirada(chaveRetirada.codigo)} />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setChaveRetirada(null)}><Text style={styles.cancelText}>Cancelar</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.confirmButton} disabled={retirando !== null} onPress={() => chaveRetirada && handleRetirada(chaveRetirada.codigo)}>{retirando ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>Confirmar retirada</Text>}</TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -269,4 +356,11 @@ const styles = StyleSheet.create({
   secondaryButtonText: { color: "#fff" },
   ghostButton: { backgroundColor: "#e5e7eb" },
   ghostButtonText: { color: "#111827", fontWeight: "bold", fontSize: 13 },
+  modalBackdrop: { flex: 1, justifyContent: "center", padding: 18, backgroundColor: "rgba(11,41,74,0.55)" },
+  modalCard: { maxHeight: "90%", width: "100%", maxWidth: 500, alignSelf: "center", backgroundColor: colors.surface, borderRadius: 20 },
+  modalContent: { padding: 24, gap: 10 }, modalIcon: { width: 50, height: 50, borderRadius: 15, backgroundColor: colors.brandSoft, alignItems: "center", justifyContent: "center" },
+  modalTitle: { color: colors.text, fontSize: 23, fontWeight: "900", marginTop: 4 }, modalSubtitle: { color: colors.muted, lineHeight: 20, marginBottom: 8 },
+  fieldLabel: { color: colors.text, fontSize: 13, fontWeight: "800" }, input: { minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 14, color: colors.text, backgroundColor: "#FBFCFE", marginBottom: 6 },
+  modalActions: { flexDirection: "row", gap: 10, marginTop: 10 }, cancelButton: { minHeight: 48, paddingHorizontal: 18, justifyContent: "center", alignItems: "center", borderRadius: 12, backgroundColor: colors.background }, cancelText: { color: colors.muted, fontWeight: "800" },
+  confirmButton: { minHeight: 48, flex: 1, justifyContent: "center", alignItems: "center", borderRadius: 12, backgroundColor: colors.brand }, confirmText: { color: "#fff", fontWeight: "900" },
 });

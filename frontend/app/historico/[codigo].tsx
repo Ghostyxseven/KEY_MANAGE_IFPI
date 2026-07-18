@@ -11,6 +11,7 @@ type Movimentacao = {
   chaveCodigo: string;
   tipo: "retirada" | "devolucao";
   responsavel: { nome: string; matricula: string };
+  aluno: { nome: string; matricula?: string };
   timestampLocal: string;
   deviceId: string;
   syncStatus: string;
@@ -18,7 +19,8 @@ type Movimentacao = {
 
 export default function HistoricoDetalheScreen(): React.ReactNode {
   const params = useLocalSearchParams<{ codigo: string }>();
-  const codigoValidado = CodigoChaveSchema.safeParse(params.codigo);
+  const codigoRaw = typeof params.codigo === "string" ? decodeURIComponent(params.codigo) : params.codigo;
+  const codigoValidado = CodigoChaveSchema.safeParse(codigoRaw);
   const codigo = codigoValidado.success ? codigoValidado.data : null;
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -50,7 +52,7 @@ export default function HistoricoDetalheScreen(): React.ReactNode {
   const renderItem = ({ item }: { item: Movimentacao }): React.ReactElement => (
     <View style={styles.card}>
       <View style={[styles.timelineDot, { backgroundColor: item.tipo === "retirada" ? colors.warning : colors.success }]} />
-      <View style={styles.cardContent}><Text style={[styles.tipo, { color: item.tipo === "retirada" ? colors.warning : colors.success }]}>{item.tipo === "retirada" ? "RETIRADA" : "DEVOLUÇÃO"}</Text><Text style={styles.responsavel}>{item.responsavel.nome}</Text><Text style={styles.meta}>Matrícula {item.responsavel.matricula}</Text><Text style={styles.data}>{new Date(item.timestampLocal).toLocaleString("pt-BR")}</Text></View>
+      <View style={styles.cardContent}><Text style={[styles.tipo, { color: item.tipo === "retirada" ? colors.warning : colors.success }]}>{item.tipo === "retirada" ? "RETIRADA" : "DEVOLUÇÃO"}</Text><Text style={styles.responsavel}>{item.aluno.nome}</Text>{item.aluno.matricula ? <Text style={styles.meta}>Matrícula do aluno: {item.aluno.matricula}</Text> : null}<Text style={styles.meta}>Operador: {item.responsavel.nome}</Text><Text style={styles.data}>{new Date(item.timestampLocal).toLocaleString("pt-BR")}</Text></View>
     </View>
   );
 

@@ -8,6 +8,7 @@ const DEVICE_ID_KEY = "@coretech:device_id";
 
 export type MovimentacaoPending = {
   id: string;
+  ownerUid?: string;
   chaveCodigo: string;
   tipo: "retirada" | "devolucao";
   payload: {
@@ -57,6 +58,7 @@ function normalizarPendencia(item: Partial<MovimentacaoPending>): MovimentacaoPe
   if (!item.chaveCodigo || !item.tipo || !item.payload) return null;
   return {
     id: idMovimentacaoValido(item.id) ? item.id : criarUuid(),
+    ownerUid: item.ownerUid,
     chaveCodigo: item.chaveCodigo,
     tipo: item.tipo,
     payload: item.payload,

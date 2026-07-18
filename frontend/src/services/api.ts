@@ -23,6 +23,7 @@ import { registrarAuditoria } from "./audit";
 
 export type MovimentacaoPayload = {
   responsavel: { nome: string; matricula: string };
+  aluno?: { nome: string; matricula?: string };
   timestampLocal: string;
   deviceId: string;
 };
@@ -32,6 +33,7 @@ export type Chave = {
   descricao?: string;
   status: "disponivel" | "em_uso";
   responsavelAtual: { nome: string; matricula: string } | null;
+  alunoAtual?: { nome: string; matricula?: string } | null;
   ultimaMovimentacaoEm: string | null;
   arquivada?: boolean;
 };
@@ -40,6 +42,7 @@ export type Movimentacao = {
   chaveCodigo: string;
   tipo: "retirada" | "devolucao";
   responsavel: { nome: string; matricula: string };
+  aluno: { nome: string; matricula?: string };
   timestampLocal: string;
   deviceId: string;
   syncStatus: "pendente" | "sincronizado" | "erro";
@@ -86,6 +89,7 @@ function mapearChave(
     descricao: dados.descricao,
     status: dados.status,
     responsavelAtual: dados.responsavelAtual ?? null,
+    alunoAtual: dados.alunoAtual ?? null,
     ultimaMovimentacaoEm: paraIso(dados.ultimaMovimentacaoEm),
     arquivada: dados.arquivada ?? false,
   });
@@ -101,6 +105,7 @@ function mapearMovimentacao(
     chaveCodigo: dados.chaveCodigo,
     tipo: dados.tipo,
     responsavel: dados.responsavel,
+    aluno: dados.aluno ?? dados.responsavel,
     timestampLocal: paraIso(dados.timestampLocal),
     deviceId: dados.deviceId,
     syncStatus: dados.syncStatus,
@@ -134,14 +139,17 @@ function respostaPendente(
   payload: MovimentacaoPayload,
   id: string,
 ): { chave: Chave; movimentacao: Movimentacao } {
+  if (!payload.aluno?.nome.trim()) throw criarErro("ALUNO_OBRIGATORIO", "Informe o nome do aluno que retirou a chave.", 400);
+  const aluno = payload.aluno;
   return {
     chave: {
       codigo,
       status: tipo === "retirada" ? "em_uso" : "disponivel",
       responsavelAtual: tipo === "retirada" ? payload.responsavel : null,
+      alunoAtual: tipo === "retirada" ? payload.aluno ?? null : null,
       ultimaMovimentacaoEm: payload.timestampLocal,
     },
-    movimentacao: { id, chaveCodigo: codigo, tipo, ...payload, syncStatus: "pendente" },
+    movimentacao: { id, chaveCodigo: codigo, tipo, ...payload, aluno, syncStatus: "pendente" },
   };
 }
 
@@ -150,7 +158,9 @@ async function enfileirar(
   tipo: TipoMovimentacao,
   payload: MovimentacaoPayload,
 ): Promise<{ chave: Chave; movimentacao: Movimentacao }> {
-  const pendencia = await storage.adicionarMovimentacaoPendente({ chaveCodigo: codigo, tipo, payload });
+  const ownerUid = firebaseServices().auth.currentUser?.uid;
+  if (!ownerUid) throw criarErro("SESSAO_INVALIDA", "Entre novamente para salvar esta operação offline.", 401);
+  const pendencia = await storage.adicionarMovimentacaoPendente({ chaveCodigo: codigo, tipo, payload, ownerUid });
   const resposta = respostaPendente(codigo, tipo, payload, pendencia.id);
   await storage.atualizarChaveCache(resposta.chave);
   return resposta;
@@ -175,7 +185,7 @@ async function executarMovimentacao(
 ): Promise<ResultadoAplicacao> {
   const { db, uid } = await bancoAutenticado();
   const perfil = await perfilAtual();
-  if (perfil?.perfil !== "guarda") throw criarErro("SESSAO_INVALIDA", "Sessão de guarda inválida.", 401);
+  if (perfil?.perfil !== "guarda" && perfil?.perfil !== "admin") throw criarErro("SESSAO_INVALIDA", "Sua sessão não permite registrar movimentações.", 401);
   const payloadCanonico: MovimentacaoPayload = { ...payload, responsavel: { nome: perfil.nome, matricula: perfil.matricula } };
   const chaveRef = await resolverChave(db, codigo);
   const movimentacaoRef = doc(db, "movimentacoes", id);
@@ -188,6 +198,8 @@ async function executarMovimentacao(
     }
 
     const chave = mapearChave(chaveSnapshot, codigo);
+    const aluno = tipo === "retirada" ? payloadCanonico.aluno : payloadCanonico.aluno ?? chave.alunoAtual ?? undefined;
+    if (!aluno?.nome.trim()) throw criarErro("ALUNO_OBRIGATORIO", "Informe o nome do aluno que retirou a chave.", 400);
     if (movimentoSnapshot.exists()) {
       return { status: "sincronizado", chave, movimentacao: mapearMovimentacao(movimentoSnapshot) };
     }
@@ -200,7 +212,7 @@ async function executarMovimentacao(
       return {
         status: "conflito",
         chave,
-        movimentacao: { id, chaveCodigo: codigo, tipo, ...payloadCanonico, syncStatus: "erro" },
+        movimentacao: { id, chaveCodigo: codigo, tipo, ...payloadCanonico, aluno, syncStatus: "erro" },
       };
     }
 
@@ -210,6 +222,7 @@ async function executarMovimentacao(
       codigo,
       status: tipo === "retirada" ? "em_uso" : "disponivel",
       responsavelAtual: tipo === "retirada" ? payloadCanonico.responsavel : null,
+      alunoAtual: tipo === "retirada" ? aluno : null,
       ultimaMovimentacaoEm: payloadCanonico.timestampLocal,
     };
     const movimentacao: Movimentacao = {
@@ -217,11 +230,14 @@ async function executarMovimentacao(
       chaveCodigo: codigo,
       tipo,
       ...payloadCanonico,
+      aluno,
       syncStatus: "sincronizado",
     };
 
     transaction.update(chaveRef, {
-      ...chaveAtualizada,
+      status: chaveAtualizada.status,
+      responsavelAtual: chaveAtualizada.responsavelAtual,
+      alunoAtual: chaveAtualizada.alunoAtual,
       ultimaMovimentacaoEm: timestamp,
       ultimaMovimentacaoId: id,
     });
@@ -276,6 +292,7 @@ export const api = {
       ...(descricao?.trim() ? { descricao: descricao.trim() } : {}),
       status: "disponivel",
       responsavelAtual: null,
+      alunoAtual: null,
       ultimaMovimentacaoEm: null,
       arquivada: false,
     };
@@ -398,7 +415,10 @@ export const api = {
     if (sincronizando || !(await storage.getNetworkStatus()).isConnected) {
       return { sincronizadas: 0, falhas: 0, conflitos: 0 };
     }
+    const perfil = await perfilAtual();
+    if (!perfil?.ativo) return { sincronizadas: 0, falhas: 0, conflitos: 0 };
     const pendentes = (await storage.buscarMovimentacoesPendentes())
+      .filter((item) => item.ownerUid ? item.ownerUid === perfil.uid : item.payload.responsavel.matricula === perfil.matricula)
       .filter((item) => !item.error && (!item.proximaTentativaEm || item.proximaTentativaEm <= new Date().toISOString()))
       .sort((a, b) => {
         const porData = a.payload.timestampLocal.localeCompare(b.payload.timestampLocal);

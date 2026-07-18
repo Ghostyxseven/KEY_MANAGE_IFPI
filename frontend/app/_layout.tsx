@@ -6,6 +6,7 @@ import { AppProvider, useApp } from "../src/context/AppContext";
 import { ToastProvider } from "../src/presentation/components/Toast";
 import SplashScreen from "../src/presentation/components/SplashScreen";
 import { colors } from "../src/presentation/theme";
+import { registrarSincronizacaoEmSegundoPlano } from "../src/services/backgroundSync";
 
 /**
  * Layout principal da aplicação.
@@ -40,6 +41,7 @@ function RotasProtegidas(): React.ReactElement {
 }
 
 export default function RootLayout(): React.ReactElement {
+  useEffect(() => { void registrarSincronizacaoEmSegundoPlano(); }, []);
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />

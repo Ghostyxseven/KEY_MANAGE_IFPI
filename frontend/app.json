@@ -35,7 +35,16 @@
           "backgroundColor": "#0B294A"
         }
       ],
-      "expo-router"
+      "expo-router",
+      "expo-background-task",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableBundleCompression": true
+          }
+        }
+      ]
     ],
     "scheme": "coretech-chaves",
     "extra": {

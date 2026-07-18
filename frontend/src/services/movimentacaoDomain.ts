@@ -13,6 +13,7 @@ export function aplicarMovimentacao(chave: Chave, tipo: TipoMovimentacao, payloa
     ...chave,
     status: tipo === "retirada" ? "em_uso" : "disponivel",
     responsavelAtual: tipo === "retirada" ? payload.responsavel : null,
+    alunoAtual: tipo === "retirada" ? payload.aluno ?? null : null,
     ultimaMovimentacaoEm: payload.timestampLocal,
   };
 }
